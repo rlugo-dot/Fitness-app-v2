@@ -25,6 +25,8 @@ class LogWorkoutRequest(BaseModel):
     exercises: list[Exercise] = []
     log_date: str
     body_weight_kg: Optional[float] = None
+    is_shared: bool = False
+    caption: Optional[str] = None
 
 
 @router.get("")
@@ -62,6 +64,8 @@ def log_workout(
         "calories_burned": calories,
         "exercises": [e.model_dump(exclude_none=True) for e in req.exercises],
         "log_date": req.log_date,
+        "is_shared": req.is_shared,
+        "caption": req.caption,
     }
     result = supabase.table("workout_logs").insert(record).execute()
     return result.data[0]
