@@ -20,11 +20,11 @@ import HealthProfile from './pages/HealthProfile';
 function AppContent() {
   const { session, loading: authLoading, signIn, signUp, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState(false);
 
   useEffect(() => {
-    if (!session) { setProfile(null); return; }
+    if (!session) { setProfile(null); setProfileLoading(false); return; }
     setProfileLoading(true);
     setProfileError(false);
     getProfile()
