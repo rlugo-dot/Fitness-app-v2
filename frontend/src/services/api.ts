@@ -57,6 +57,24 @@ export const searchFoods = (q?: string, category?: string) =>
 export const getFoodCategories = () =>
   api.get<string[]>('/foods/categories').then((r) => r.data);
 
+export interface CustomFoodInput {
+  name: string;
+  category?: string;
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  fiber_g?: number;
+  default_serving?: number;
+  serving_unit?: string;
+}
+
+export const createCustomFood = (data: CustomFoodInput) =>
+  api.post<Food>('/foods/custom', data).then((r) => r.data);
+
+export const deleteCustomFood = (id: string) =>
+  api.delete(`/foods/custom/${id}`);
+
 // ─── Meals ────────────────────────────────────────────────────────────────────
 export const getMeals = (log_date: string) =>
   api.get<FoodLog[]>('/meals', { params: { log_date } }).then((r) => r.data);

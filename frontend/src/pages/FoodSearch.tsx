@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { searchFoods, getFoodCategories, logFood, scanFood } from '../services/api';
+import { searchFoods, getFoodCategories, logFood, scanFood, createCustomFood, deleteCustomFood } from '../services/api';
 import type { ScanResult } from '../services/api';
 import type { Food, MealType } from '../types';
-import { Search, ChevronLeft, Plus, Check, Camera, X, Loader2, Barcode } from 'lucide-react';
+import { Search, ChevronLeft, Plus, Check, Camera, X, Loader2, Barcode, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import BarcodeScanner from '../components/BarcodeScanner';
 
@@ -79,6 +79,16 @@ export default function FoodSearch() {
   const [logging, setLogging] = useState<string | null>(null);
   const [logged, setLogged] = useState<Set<string>>(new Set());
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+
+  // Custom food form state
+  const [showCustomForm, setShowCustomForm] = useState(false);
+  const [customName, setCustomName] = useState('');
+  const [customCalories, setCustomCalories] = useState('');
+  const [customProtein, setCustomProtein] = useState('');
+  const [customCarbs, setCustomCarbs] = useState('');
+  const [customFat, setCustomFat] = useState('');
+  const [customServing, setCustomServing] = useState('100');
+  const [customSaving, setCustomSaving] = useState(false);
 
   // Barcode state
   const [barcodeScanning, setBarcodeScanning] = useState(false);
@@ -172,6 +182,40 @@ export default function FoodSearch() {
       toast.error('Failed to log food');
     }
     setLogging(null);
+  }
+
+  async function handleSaveCustomFood() {
+    if (!customName.trim()) return toast.error('Enter a food name');
+    setCustomSaving(true);
+    try {
+      await createCustomFood({
+        name: customName.trim(),
+        calories: parseFloat(customCalories) || 0,
+        protein_g: parseFloat(customProtein) || 0,
+        carbs_g: parseFloat(customCarbs) || 0,
+        fat_g: parseFloat(customFat) || 0,
+        default_serving: parseInt(customServing) || 100,
+      });
+      toast.success(`${customName.trim()} saved to My Foods`);
+      setShowCustomForm(false);
+      setCustomName(''); setCustomCalories(''); setCustomProtein('');
+      setCustomCarbs(''); setCustomFat(''); setCustomServing('100');
+      loadFoods(query, category);
+    } catch {
+      toast.error('Failed to save food');
+    }
+    setCustomSaving(false);
+  }
+
+  async function handleDeleteCustomFood(food: Food) {
+    const rawId = food.id.replace('custom_', '');
+    try {
+      await deleteCustomFood(rawId);
+      toast.success('Deleted');
+      loadFoods(query, category);
+    } catch {
+      toast.error('Failed to delete');
+    }
   }
 
   const handleBarcodeDetected = useCallback(async (code: string) => {
@@ -325,6 +369,13 @@ export default function FoodSearch() {
               ))}
             </div>
 
+            <button
+              onClick={() => setShowCustomForm(true)}
+              className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-green-400 text-green-600 rounded-xl text-sm font-medium hover:bg-green-50 transition-all"
+            >
+              <Pencil size={14} /> Create Custom Food
+            </button>
+
             {loading ? (
               <div className="text-center py-8 text-gray-400 text-sm">Searching…</div>
             ) : foods.length === 0 ? (
@@ -337,7 +388,12 @@ export default function FoodSearch() {
                   return (
                     <div key={food.id} className="bg-white rounded-xl border border-gray-100 p-3.5 flex items-center gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 text-sm truncate">{food.name}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-medium text-gray-900 text-sm truncate">{food.name}</p>
+                          {food.is_custom && (
+                            <span className="shrink-0 text-[9px] font-semibold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">Mine</span>
+                          )}
+                        </div>
                         <p className="text-xs text-gray-400 mt-0.5">
                           {food.category} · {servingLabel(food)} · P:{Math.round(food.protein_g * food.default_serving / 100 * qty)}g
                           · C:{Math.round(food.carbs_g * food.default_serving / 100 * qty)}g
@@ -358,6 +414,14 @@ export default function FoodSearch() {
                           className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-sm flex items-center justify-center hover:bg-gray-200"
                         >+</button>
                       </div>
+                      {food.is_custom && (
+                        <button
+                          onClick={() => handleDeleteCustomFood(food)}
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-red-400 hover:bg-red-50"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
                       <button
                         onClick={() => !isLogged && handleLog(food)}
                         disabled={logging === food.id || isLogged}
@@ -609,6 +673,73 @@ export default function FoodSearch() {
           </div>
         )}
       </div>
+
+      {/* Custom Food Modal */}
+      {showCustomForm && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowCustomForm(false)} />
+          <div className="relative bg-white rounded-t-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-gray-900">Create Custom Food</h2>
+              <button onClick={() => setShowCustomForm(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-xs text-gray-400">Enter nutrition values per 100g. You can log it in any quantity.</p>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Food Name *</label>
+              <input
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                placeholder="e.g. Homemade Arroz Caldo"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'Calories (kcal)', value: customCalories, set: setCustomCalories, placeholder: '0' },
+                { label: 'Protein (g)', value: customProtein, set: setCustomProtein, placeholder: '0' },
+                { label: 'Carbs (g)', value: customCarbs, set: setCustomCarbs, placeholder: '0' },
+                { label: 'Fat (g)', value: customFat, set: setCustomFat, placeholder: '0' },
+              ].map(({ label, value, set, placeholder }) => (
+                <div key={label}>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+                  <input
+                    type="number"
+                    value={value}
+                    onChange={(e) => set(e.target.value)}
+                    placeholder={placeholder}
+                    min={0}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Default serving size (g)</label>
+              <input
+                type="number"
+                value={customServing}
+                onChange={(e) => setCustomServing(e.target.value)}
+                min={1}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none"
+              />
+            </div>
+
+            <button
+              onClick={handleSaveCustomFood}
+              disabled={customSaving || !customName.trim()}
+              className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {customSaving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+              {customSaving ? 'Saving…' : 'Save to My Foods'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

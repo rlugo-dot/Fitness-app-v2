@@ -21,6 +21,7 @@ export interface Food {
   fiber_g: number;
   serving_unit: string;
   default_serving: number;
+  is_custom?: boolean;
 }
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
