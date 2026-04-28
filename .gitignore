@@ -17,3 +17,5 @@ frontend/dist/
 
 # Vite
 frontend/.vite/
+.vercel
+.env*.local

@@ -75,7 +75,7 @@ export default function Recommendations() {
     setLogging(null);
   }
 
-  const remainingPct = result ? Math.min((result.remaining_calories / 2000) * 100, 100) : 0;
+  const remainingPct = result ? Math.min((result.remaining_calories / result.daily_calorie_goal) * 100, 100) : 0;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-8">

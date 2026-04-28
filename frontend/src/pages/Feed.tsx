@@ -108,11 +108,12 @@ export default function Feed() {
     setLikingInProgress((prev) => new Set([...prev, item.id]));
 
     const wasLiked = item.liked_by_me;
-    // Optimistic update
+    const originalCount = item.likes_count;
+
     setFeed((prev) =>
       prev.map((f) =>
         f.id === item.id
-          ? { ...f, liked_by_me: !wasLiked, likes_count: f.likes_count + (wasLiked ? -1 : 1) }
+          ? { ...f, liked_by_me: !wasLiked, likes_count: originalCount + (wasLiked ? -1 : 1) }
           : f
       )
     );
@@ -124,11 +125,10 @@ export default function Feed() {
         await likeWorkout(item.id);
       }
     } catch {
-      // Revert on error
       setFeed((prev) =>
         prev.map((f) =>
           f.id === item.id
-            ? { ...f, liked_by_me: wasLiked, likes_count: f.likes_count + (wasLiked ? 1 : -1) }
+            ? { ...f, liked_by_me: wasLiked, likes_count: originalCount }
             : f
         )
       );

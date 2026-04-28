@@ -38,6 +38,7 @@ export default function Progress() {
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     load(range);
@@ -45,16 +46,21 @@ export default function Progress() {
 
   async function load(days: number) {
     setLoading(true);
-    const [data, weights] = await Promise.all([
-      getAnalyticsOverview(days),
-      getWeightLogs(days),
-    ]);
-    setOverview(data);
-    setWeightLogs(weights.slice(0, days).reverse());
+    setError(false);
+    try {
+      const [data, weights] = await Promise.all([
+        getAnalyticsOverview(days),
+        getWeightLogs(days),
+      ]);
+      setOverview(data);
+      setWeightLogs(weights.slice(0, days).reverse());
+    } catch {
+      setError(true);
+    }
     setLoading(false);
   }
 
-  if (!overview && loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-gray-400 text-sm">Loading progress…</div>
@@ -62,7 +68,20 @@ export default function Progress() {
     );
   }
 
-  const data = overview!;
+  if (error || !overview) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <p className="text-gray-500 text-sm mb-3">Failed to load progress data.</p>
+          <button onClick={() => load(range)} className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-medium">
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const data = overview;
 
   // Workout lookup by date
   const workoutMap = Object.fromEntries(data.workout_days.map((w) => [w.date, w]));
@@ -245,6 +264,11 @@ export default function Progress() {
         )}
 
         {/* Weight trend */}
+        {weightChartData.length === 1 && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center py-6">
+            <p className="text-sm text-gray-500">⚖️ Log one more weight entry to see your trend chart.</p>
+          </div>
+        )}
         {weightChartData.length >= 2 && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
             <div className="flex items-center justify-between mb-1">

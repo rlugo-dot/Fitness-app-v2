@@ -110,6 +110,11 @@ export default function FoodSearch() {
         meal_type: selectedMeal,
         quantity: 1,
         log_date: logDate,
+        food_name: scanResult.food_name,
+        calories: scanResult.calories,
+        protein_g: scanResult.protein_g,
+        carbs_g: scanResult.carbs_g,
+        fat_g: scanResult.fat_g,
       });
       setLoggedScan(true);
       toast.success(`${scanResult.food_name} logged!`);

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import profile, foods, meals, water, workouts, health, food_scan, integrations, weight, social, recommendations, analytics, professionals
+from app.routers import profile, foods, meals, water, workouts, health, food_scan, integrations, weight, social, recommendations, analytics, professionals, notifications
 
 app = FastAPI(title="Nutrisyon API", version="1.0.0")
 
@@ -25,6 +25,7 @@ app.include_router(social.router,           prefix="/api/social",           tags
 app.include_router(recommendations.router,  prefix="/api/recommendations",  tags=["recommendations"])
 app.include_router(analytics.router,        prefix="/api/analytics",        tags=["analytics"])
 app.include_router(professionals.router,    prefix="/api/professionals",    tags=["professionals"])
+app.include_router(notifications.router,   prefix="/api/notifications",   tags=["notifications"])
 
 
 @app.get("/api/health")

@@ -8,9 +8,41 @@
 
 body {
   @apply bg-gray-50;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Custom scrollbar */
+/* Prevent Safari auto-zoom on input focus (requires font-size >= 16px on mobile) */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Page transitions */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: fadeIn 0.25s ease-out both;
+}
+
+/* Hide scrollbar (used on horizontal scroll lists) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom scrollbar (desktop only) */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded-full; }
+
+/* Safari full-height fix */
+.min-h-screen {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}

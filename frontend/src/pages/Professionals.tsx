@@ -226,7 +226,12 @@ export default function Professionals() {
   const [query, setQuery] = useState('');
   const [activeSpecialty, setActiveSpecialty] = useState('');
   const [bookingPro, setBookingPro] = useState<Professional | null>(null);
-  const [bookedIds, setBookedIds] = useState<Set<string>>(new Set());
+  const [bookedIds, setBookedIds] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('nutrisyon_booked_pros');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch { return new Set(); }
+  });
 
   useEffect(() => {
     Promise.all([
@@ -330,7 +335,9 @@ export default function Professionals() {
           pro={bookingPro}
           onClose={() => setBookingPro(null)}
           onSuccess={() => {
-            setBookedIds((prev) => new Set([...prev, bookingPro.id]));
+            const newIds = new Set([...bookedIds, bookingPro.id]);
+            setBookedIds(newIds);
+            try { localStorage.setItem('nutrisyon_booked_pros', JSON.stringify([...newIds])); } catch {}
             setBookingPro(null);
           }}
         />

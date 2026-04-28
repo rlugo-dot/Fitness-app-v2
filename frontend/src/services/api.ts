@@ -25,6 +25,24 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const original = error.config;
+    if (error.response?.status === 401 && !original._retry) {
+      original._retry = true;
+      const { data, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !data.session) {
+        await supabase.auth.signOut();
+        return Promise.reject(error);
+      }
+      original.headers.Authorization = `Bearer ${data.session.access_token}`;
+      return api(original);
+    }
+    return Promise.reject(error);
+  }
+);
+
 // ─── Profile ──────────────────────────────────────────────────────────────────
 export const getProfile = () =>
   api.get<Profile>('/profile/me').then((r) => r.data);
@@ -226,6 +244,7 @@ export interface MealSuggestion {
 
 export interface RecommendationsResponse {
   meal_type: string;
+  daily_calorie_goal: number;
   remaining_calories: number;
   remaining_protein_g: number;
   remaining_carbs_g: number;
@@ -272,3 +291,16 @@ export const updateMyConditions = (conditions: string[]) =>
 
 export const getDietRecommendations = () =>
   api.get<DietRecommendation[]>('/health/recommendations').then((r) => r.data);
+
+// ─── Push Notifications ───────────────────────────────────────────────────────
+export const subscribePush = (sub: { endpoint: string; p256dh: string; auth: string }) =>
+  api.post('/notifications/subscribe', sub).then((r) => r.data);
+
+export const unsubscribePush = () =>
+  api.delete('/notifications/unsubscribe').then((r) => r.data);
+
+export const getPushStatus = () =>
+  api.get<{ subscribed: boolean }>('/notifications/status').then((r) => r.data);
+
+export const sendTestNotification = () =>
+  api.post('/notifications/test').then((r) => r.data);

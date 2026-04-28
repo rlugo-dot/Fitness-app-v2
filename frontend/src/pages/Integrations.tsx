@@ -100,18 +100,22 @@ export default function Integrations() {
   }, []);
 
   async function loadAll() {
-    const [s, w] = await Promise.all([getIntegrationStatus(), getWeightLogs(30)]);
-    setStatuses(s);
-    setWeightLogs(w);
+    try {
+      const [s, w] = await Promise.all([getIntegrationStatus(), getWeightLogs(30)]);
+      setStatuses(s);
+      setWeightLogs(w);
 
-    const ouraConnected = s.find((x) => x.provider === 'oura' && x.connected);
-    if (ouraConnected) {
-      try {
-        const data = await getOuraToday();
-        setOuraData(data);
-      } catch {
-        // Not yet data for today
+      const ouraConnected = s.find((x) => x.provider === 'oura' && x.connected);
+      if (ouraConnected) {
+        try {
+          const data = await getOuraToday();
+          setOuraData(data);
+        } catch {
+          // No data for today yet
+        }
       }
+    } catch {
+      toast.error('Failed to load integrations');
     }
   }
 

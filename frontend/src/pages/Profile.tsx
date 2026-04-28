@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { updateProfile } from '../services/api';
+import { updateProfile, sendTestNotification } from '../services/api';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import type { Profile } from '../types';
-import { ChevronLeft, Save } from 'lucide-react';
+import { ChevronLeft, Save, Bell, BellOff } from 'lucide-react';
 
 interface Props {
   profile: Profile;
@@ -42,6 +43,7 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
   const [calorieGoal, setCalorieGoal] = useState(profile.daily_calorie_goal?.toString() || '2000');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const { isSupported, isSubscribed, loading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
 
   // Auto-calculate calorie goal based on goal type
   function suggestCalories() {
@@ -78,7 +80,7 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
   const { label: bmiLbl, color: bmiColor } = bmiLabel(bmiVal);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="page-enter min-h-screen bg-gray-50 pb-8">
       <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           {!isSetup && (
@@ -220,6 +222,16 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
             )}
           </button>
 
+          {isSetup && (
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="w-full py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              Skip for now
+            </button>
+          )}
+
           {!isSetup && (
             <>
               <button
@@ -250,6 +262,39 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
               >
                 <span>🗺️</span> Find Gyms Nearby
               </button>
+              {isSupported && (
+                <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
+                  <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Notifications</h2>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Meal Reminders</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Breakfast, lunch & dinner nudges</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={isSubscribed ? unsubscribe : subscribe}
+                      disabled={pushLoading}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50 ${
+                        isSubscribed
+                          ? 'bg-green-50 text-green-700 hover:bg-green-100'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {isSubscribed ? <Bell size={14} /> : <BellOff size={14} />}
+                      {isSubscribed ? 'On' : 'Off'}
+                    </button>
+                  </div>
+                  {isSubscribed && (
+                    <button
+                      type="button"
+                      onClick={() => sendTestNotification().catch(() => {})}
+                      className="text-xs text-gray-400 hover:text-gray-600"
+                    >
+                      Send test notification
+                    </button>
+                  )}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={onSignOut}

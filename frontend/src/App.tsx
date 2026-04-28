@@ -33,9 +33,9 @@ function AppContent() {
       .finally(() => setProfileLoading(false));
   }, [session]);
 
-  if (authLoading || (session && profileLoading)) {
+  if (authLoading || (session && (profileLoading || (!profile && !profileError)))) {
     return (
-      <div className="min-h-screen bg-green-50 flex items-center justify-center">
+      <div className="page-enter min-h-screen bg-green-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-4xl mb-3">🌿</div>
           <p className="text-gray-500 text-sm">Loading Nutrisyon…</p>
@@ -61,7 +61,7 @@ function AppContent() {
     );
   }
 
-  const needsSetup = profile && (!profile.height_cm || !profile.weight_kg);
+  const needsSetup = profile && !profile.full_name;
 
   return (
     <Routes>

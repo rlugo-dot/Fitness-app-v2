@@ -135,7 +135,7 @@ export default function GymMap() {
           if (!elLat || !elLon) return null;
           return {
             id: el.id,
-            name: el.tags?.name || el.tags?.['name:en'] || 'Gym',
+            name: el.tags?.name || el.tags?.['name:en'] || el.tags?.['name:tl'] || el.tags?.operator || (el.tags?.leisure === 'fitness_centre' ? 'Fitness Centre' : 'Gym'),
             lat: elLat,
             lon: elLon,
             tags: el.tags || {},
