@@ -1,10 +1,42 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { searchFoods, getFoodCategories, logFood, scanFood } from '../services/api';
 import type { ScanResult } from '../services/api';
 import type { Food, MealType } from '../types';
-import { Search, ChevronLeft, Plus, Check, Camera, X, Loader2 } from 'lucide-react';
+import { Search, ChevronLeft, Plus, Check, Camera, X, Loader2, Barcode } from 'lucide-react';
 import { toast } from 'sonner';
+import BarcodeScanner from '../components/BarcodeScanner';
+
+interface BarcodeProduct {
+  name: string;
+  brand: string;
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  fiber_g: number;
+  serving_size: string;
+  image_url: string | null;
+}
+
+async function lookupBarcode(barcode: string): Promise<BarcodeProduct> {
+  const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
+  const json = await res.json();
+  if (json.status !== 1) throw new Error('Product not found');
+  const p = json.product;
+  const n = p.nutriments ?? {};
+  return {
+    name: p.product_name || p.generic_name || 'Unknown Product',
+    brand: p.brands || '',
+    calories: n['energy-kcal_100g'] ?? (n['energy_100g'] ? Math.round(n['energy_100g'] / 4.184) : 0),
+    protein_g: n['proteins_100g'] ?? 0,
+    carbs_g: n['carbohydrates_100g'] ?? 0,
+    fat_g: n['fat_100g'] ?? 0,
+    fiber_g: n['fiber_100g'] ?? 0,
+    serving_size: p.serving_size || '100g',
+    image_url: p.image_url || null,
+  };
+}
 
 const MEAL_LABELS: Record<MealType, string> = {
   breakfast: '🌅 Breakfast',
@@ -25,7 +57,7 @@ export default function FoodSearch() {
   const initialMeal = (searchParams.get('meal') as MealType) || 'snack';
   const initialDate = searchParams.get('date') || new Date().toISOString().split('T')[0];
 
-  const [tab, setTab] = useState<'search' | 'scan'>('search');
+  const [tab, setTab] = useState<'search' | 'scan' | 'barcode'>('search');
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('');
   const [categories, setCategories] = useState<string[]>([]);
@@ -36,6 +68,13 @@ export default function FoodSearch() {
   const [logging, setLogging] = useState<string | null>(null);
   const [logged, setLogged] = useState<Set<string>>(new Set());
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+
+  // Barcode state
+  const [barcodeScanning, setBarcodeScanning] = useState(false);
+  const [barcodeProduct, setBarcodeProduct] = useState<BarcodeProduct | null>(null);
+  const [barcodeLoading, setBarcodeLoading] = useState(false);
+  const [barcodeServingG, setBarcodeServingG] = useState(100);
+  const [barcodeLogged, setBarcodeLogged] = useState(false);
 
   // Scan state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -124,6 +163,49 @@ export default function FoodSearch() {
     setLogging(null);
   }
 
+  const handleBarcodeDetected = useCallback(async (code: string) => {
+    setBarcodeScanning(false);
+    setBarcodeLoading(true);
+    try {
+      const product = await lookupBarcode(code);
+      setBarcodeProduct(product);
+      const grams = parseInt(product.serving_size) || 100;
+      setBarcodeServingG(isNaN(grams) ? 100 : grams);
+    } catch {
+      toast.error('Product not found. Try searching by name instead.');
+      setBarcodeScanning(true);
+    }
+    setBarcodeLoading(false);
+  }, []);
+
+  async function handleLogBarcode() {
+    if (!barcodeProduct) return;
+    const ratio = barcodeServingG / 100;
+    try {
+      await logFood({
+        food_id: 'barcode_' + Date.now(),
+        meal_type: selectedMeal,
+        quantity: 1,
+        log_date: logDate,
+        food_name: barcodeProduct.name,
+        calories: Math.round(barcodeProduct.calories * ratio),
+        protein_g: Math.round(barcodeProduct.protein_g * ratio),
+        carbs_g: Math.round(barcodeProduct.carbs_g * ratio),
+        fat_g: Math.round(barcodeProduct.fat_g * ratio),
+      });
+      setBarcodeLogged(true);
+      toast.success(`${barcodeProduct.name} logged!`);
+    } catch {
+      toast.error('Failed to log food');
+    }
+  }
+
+  function resetBarcode() {
+    setBarcodeProduct(null);
+    setBarcodeLogged(false);
+    setBarcodeScanning(true);
+  }
+
   function clearScan() {
     setScanImage(null);
     setScanResult(null);
@@ -164,7 +246,7 @@ export default function FoodSearch() {
             ))}
           </div>
 
-          {/* Search / Scan tabs */}
+          {/* Search / Scan / Barcode tabs */}
           <div className="flex mt-3 bg-gray-100 rounded-xl p-1">
             <button
               onClick={() => setTab('search')}
@@ -175,12 +257,20 @@ export default function FoodSearch() {
               <Search size={14} /> Search
             </button>
             <button
+              onClick={() => { setTab('barcode'); setBarcodeScanning(true); setBarcodeProduct(null); setBarcodeLogged(false); }}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all ${
+                tab === 'barcode' ? 'bg-white shadow text-gray-900' : 'text-gray-500'
+              }`}
+            >
+              <Barcode size={14} /> Barcode
+            </button>
+            <button
               onClick={() => setTab('scan')}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all ${
                 tab === 'scan' ? 'bg-white shadow text-gray-900' : 'text-gray-500'
               }`}
             >
-              <Camera size={14} /> Scan Food
+              <Camera size={14} /> AI Scan
             </button>
           </div>
         </div>
@@ -272,6 +362,102 @@ export default function FoodSearch() {
               </div>
             )}
           </>
+        )}
+
+        {/* ── Barcode Tab ── */}
+        {tab === 'barcode' && (
+          <div className="space-y-4">
+            {barcodeLoading && (
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <Loader2 size={28} className="animate-spin text-green-600" />
+                <p className="text-sm text-gray-500">Looking up product…</p>
+              </div>
+            )}
+
+            {!barcodeLoading && !barcodeProduct && barcodeScanning && (
+              <BarcodeScanner onDetected={handleBarcodeDetected} />
+            )}
+
+            {!barcodeLoading && barcodeProduct && (
+              <div className="space-y-4">
+                <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    {barcodeProduct.image_url && (
+                      <img
+                        src={barcodeProduct.image_url}
+                        alt={barcodeProduct.name}
+                        className="w-16 h-16 rounded-xl object-contain bg-gray-50 border border-gray-100"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-900 text-sm leading-snug">{barcodeProduct.name}</p>
+                      {barcodeProduct.brand && (
+                        <p className="text-xs text-gray-400 mt-0.5">{barcodeProduct.brand}</p>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">Nutrition per 100g</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { label: 'Calories', value: Math.round(barcodeProduct.calories * barcodeServingG / 100), unit: 'kcal' },
+                      { label: 'Protein', value: (barcodeProduct.protein_g * barcodeServingG / 100).toFixed(1), unit: 'g' },
+                      { label: 'Carbs', value: (barcodeProduct.carbs_g * barcodeServingG / 100).toFixed(1), unit: 'g' },
+                      { label: 'Fat', value: (barcodeProduct.fat_g * barcodeServingG / 100).toFixed(1), unit: 'g' },
+                    ].map(({ label, value, unit }) => (
+                      <div key={label} className="bg-gray-50 rounded-xl p-2 text-center">
+                        <p className="text-sm font-bold text-gray-900">{value}<span className="text-xs font-normal">{unit}</span></p>
+                        <p className="text-[10px] text-gray-400">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Serving size (grams)</label>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setBarcodeServingG((g) => Math.max(5, g - 5))}
+                        className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 text-lg"
+                      >−</button>
+                      <input
+                        type="number"
+                        value={barcodeServingG}
+                        onChange={(e) => setBarcodeServingG(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="flex-1 text-center border border-gray-200 rounded-xl py-2 text-sm font-medium focus:ring-2 focus:ring-green-500 outline-none"
+                        min={1}
+                      />
+                      <button
+                        onClick={() => setBarcodeServingG((g) => g + 5)}
+                        className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 text-lg"
+                      >+</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={resetBarcode}
+                    className="flex-1 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50"
+                  >
+                    Scan Again
+                  </button>
+                  <button
+                    onClick={handleLogBarcode}
+                    disabled={barcodeLogged}
+                    className={`flex-1 py-3 font-medium rounded-xl text-sm flex items-center justify-center gap-1.5 transition-all ${
+                      barcodeLogged
+                        ? 'bg-green-100 text-green-600'
+                        : 'bg-green-600 text-white hover:bg-green-700 disabled:opacity-50'
+                    }`}
+                  >
+                    {barcodeLogged
+                      ? <><Check size={14} /> Logged!</>
+                      : <><Plus size={14} /> Log to {MEAL_LABELS[selectedMeal]}</>}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* ── Scan Tab ── */}
