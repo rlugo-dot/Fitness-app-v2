@@ -43,7 +43,7 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
   const [calorieGoal, setCalorieGoal] = useState(profile.daily_calorie_goal?.toString() || '2000');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const { isSupported, isSubscribed, loading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
+  const { isSupported, isIOS, isStandalone, isSubscribed, loading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
 
   // Auto-calculate calorie goal based on goal type
   function suggestCalories() {
@@ -262,36 +262,51 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
               >
                 <span>🗺️</span> Find Gyms Nearby
               </button>
-              {isSupported && (
+              {(isSupported || isIOS) && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
                   <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Notifications</h2>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Meal Reminders</p>
-                      <p className="text-xs text-gray-400 mt-0.5">Breakfast, lunch & dinner nudges</p>
+                  {isIOS && !isStandalone ? (
+                    <div className="flex items-start gap-3">
+                      <Bell size={18} className="text-gray-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Enable Meal Reminders</p>
+                        <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                          To get notifications on iPhone, tap{' '}
+                          <span className="font-semibold">Share</span> → <span className="font-semibold">Add to Home Screen</span>, then open the app from your home screen.
+                        </p>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={isSubscribed ? unsubscribe : subscribe}
-                      disabled={pushLoading}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50 ${
-                        isSubscribed
-                          ? 'bg-green-50 text-green-700 hover:bg-green-100'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      {isSubscribed ? <Bell size={14} /> : <BellOff size={14} />}
-                      {isSubscribed ? 'On' : 'Off'}
-                    </button>
-                  </div>
-                  {isSubscribed && (
-                    <button
-                      type="button"
-                      onClick={() => sendTestNotification().catch(() => {})}
-                      className="text-xs text-gray-400 hover:text-gray-600"
-                    >
-                      Send test notification
-                    </button>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Meal Reminders</p>
+                          <p className="text-xs text-gray-400 mt-0.5">Breakfast, lunch & dinner nudges</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={isSubscribed ? unsubscribe : subscribe}
+                          disabled={pushLoading}
+                          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50 ${
+                            isSubscribed
+                              ? 'bg-green-50 text-green-700 hover:bg-green-100'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {isSubscribed ? <Bell size={14} /> : <BellOff size={14} />}
+                          {isSubscribed ? 'On' : 'Off'}
+                        </button>
+                      </div>
+                      {isSubscribed && (
+                        <button
+                          type="button"
+                          onClick={() => sendTestNotification().catch(() => {})}
+                          className="text-xs text-gray-400 hover:text-gray-600"
+                        >
+                          Send test notification
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               )}

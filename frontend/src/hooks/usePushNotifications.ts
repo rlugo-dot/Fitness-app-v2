@@ -11,6 +11,12 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
 }
 
 export function usePushNotifications() {
+  const isIOS =
+    typeof window !== 'undefined' &&
+    /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(display-mode: standalone)').matches;
   const isSupported =
     typeof window !== 'undefined' &&
     'serviceWorker' in navigator &&
@@ -80,5 +86,5 @@ export function usePushNotifications() {
     }
   }
 
-  return { isSupported, permission, isSubscribed, loading, subscribe, unsubscribe };
+  return { isSupported, isIOS, isStandalone, permission, isSubscribed, loading, subscribe, unsubscribe };
 }
