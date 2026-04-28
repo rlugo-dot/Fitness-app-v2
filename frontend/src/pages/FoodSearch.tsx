@@ -17,6 +17,7 @@ interface BarcodeProduct {
   fiber_g: number;
   serving_size: string;
   image_url: string | null;
+  hasNutrition: boolean;
 }
 
 async function lookupBarcode(barcode: string): Promise<BarcodeProduct> {
@@ -25,16 +26,26 @@ async function lookupBarcode(barcode: string): Promise<BarcodeProduct> {
   if (json.status !== 1) throw new Error('Product not found');
   const p = json.product;
   const n = p.nutriments ?? {};
+  const calories =
+    n['energy-kcal_100g'] ||
+    n['energy-kcal'] ||
+    (n['energy-kj_100g'] ? Math.round(n['energy-kj_100g'] / 4.184) : 0) ||
+    (n['energy_100g'] ? Math.round(n['energy_100g'] / 4.184) : 0);
+  const protein_g = n['proteins_100g'] || n['proteins'] || 0;
+  const carbs_g = n['carbohydrates_100g'] || n['carbohydrates'] || 0;
+  const fat_g = n['fat_100g'] || n['fat'] || 0;
+  const hasNutrition = calories > 0 || protein_g > 0 || carbs_g > 0 || fat_g > 0;
   return {
     name: p.product_name || p.generic_name || 'Unknown Product',
     brand: p.brands || '',
-    calories: n['energy-kcal_100g'] ?? (n['energy_100g'] ? Math.round(n['energy_100g'] / 4.184) : 0),
-    protein_g: n['proteins_100g'] ?? 0,
-    carbs_g: n['carbohydrates_100g'] ?? 0,
-    fat_g: n['fat_100g'] ?? 0,
-    fiber_g: n['fiber_100g'] ?? 0,
+    calories,
+    protein_g,
+    carbs_g,
+    fat_g,
+    fiber_g: n['fiber_100g'] || n['fiber'] || 0,
     serving_size: p.serving_size || '100g',
     image_url: p.image_url || null,
+    hasNutrition,
   };
 }
 
@@ -398,6 +409,20 @@ export default function FoodSearch() {
                     </div>
                   </div>
 
+                  {!barcodeProduct.hasNutrition ? (
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
+                      <p className="text-xs font-medium text-amber-800">Nutrition data not available</p>
+                      <p className="text-xs text-amber-700 leading-relaxed">
+                        This product is in the database but has no nutrition info yet. Try <strong>AI Scan</strong> — take a photo of the nutrition label and it'll estimate the macros.
+                      </p>
+                      <button
+                        onClick={() => { setTab('scan'); clearScan(); }}
+                        className="text-xs font-semibold text-amber-800 underline underline-offset-2"
+                      >
+                        Switch to AI Scan →
+                      </button>
+                    </div>
+                  ) : (
                   <div className="grid grid-cols-4 gap-2">
                     {[
                       { label: 'Calories', value: Math.round(barcodeProduct.calories * barcodeServingG / 100), unit: 'kcal' },
@@ -411,7 +436,9 @@ export default function FoodSearch() {
                       </div>
                     ))}
                   </div>
+                  )}
 
+                  {barcodeProduct.hasNutrition && (
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1.5">Serving size (grams)</label>
                     <div className="flex items-center gap-3">
@@ -432,6 +459,7 @@ export default function FoodSearch() {
                       >+</button>
                     </div>
                   </div>
+                  )}
                 </div>
 
                 <div className="flex gap-2">
@@ -441,6 +469,7 @@ export default function FoodSearch() {
                   >
                     Scan Again
                   </button>
+                  {barcodeProduct.hasNutrition && (
                   <button
                     onClick={handleLogBarcode}
                     disabled={barcodeLogged}
@@ -454,6 +483,7 @@ export default function FoodSearch() {
                       ? <><Check size={14} /> Logged!</>
                       : <><Plus size={14} /> Log to {MEAL_LABELS[selectedMeal]}</>}
                   </button>
+                  )}
                 </div>
               </div>
             )}
