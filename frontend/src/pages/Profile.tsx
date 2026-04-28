@@ -84,7 +84,7 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
       <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           {!isSetup && (
-            <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-800">
+            <button onClick={() => navigate('/')} className="text-gray-500 hover:text-gray-800">
               <ChevronLeft size={22} />
             </button>
           )}

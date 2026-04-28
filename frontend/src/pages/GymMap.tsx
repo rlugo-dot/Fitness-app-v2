@@ -180,7 +180,7 @@ export default function GymMap() {
       <div className="bg-white border-b border-gray-100 sticky top-0 z-[1000]">
         <div className="max-w-lg mx-auto px-4 py-3">
           <div className="flex items-center gap-3 mb-3">
-            <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-800">
+            <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")} className="text-gray-500 hover:text-gray-800">
               <ChevronLeft size={22} />
             </button>
             <h1 className="text-lg font-bold text-gray-900">Gyms Nearby</h1>
