@@ -86,7 +86,7 @@ def delete_workout(
     )
     if not existing.data:
         raise HTTPException(status_code=404, detail="Workout not found")
-    supabase.table("workout_logs").delete().eq("id", workout_id).execute()
+    supabase.table("workout_logs").delete().eq("id", workout_id).eq("user_id", current_user["id"]).execute()
     return {"detail": "Deleted"}
 
 

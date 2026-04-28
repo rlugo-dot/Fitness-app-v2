@@ -58,6 +58,7 @@ class MealSuggestion(BaseModel):
 
 class RecommendationsResponse(BaseModel):
     meal_type: str
+    daily_calorie_goal: int
     remaining_calories: int
     remaining_protein_g: int
     remaining_carbs_g: int
@@ -171,6 +172,7 @@ def get_recommendations(
 
     return RecommendationsResponse(
         meal_type=suggested_meal,
+        daily_calorie_goal=calorie_goal,
         remaining_calories=remaining_cal,
         remaining_protein_g=remaining_protein,
         remaining_carbs_g=remaining_carbs,
