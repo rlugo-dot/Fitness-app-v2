@@ -1,7 +1,12 @@
-# Environment
+# Environment — never commit secrets
 .env
 .env.local
 .env.*.local
+**/.env
+**/.env.local
+**/.env.*.local
+frontend/tsconfig.app.tsbuildinfo
+frontend/tsconfig.node.tsbuildinfo
 
 # Python
 __pycache__/
