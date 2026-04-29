@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from typing import Any
 from app.dependencies import get_supabase, get_current_user
 from app.data.foods import get_food_by_id
+from app.limiter import limiter
 
 router = APIRouter()
 
@@ -39,7 +40,9 @@ def get_meals(
 
 
 @router.post("")
+@limiter.limit("5/15minutes")
 def log_food(
+    request: Request,
     req: LogFoodRequest,
     current_user: dict = Depends(get_current_user),
     supabase: Any = Depends(get_supabase),

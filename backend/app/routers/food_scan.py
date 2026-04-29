@@ -1,12 +1,13 @@
 import base64
 import json
 import re
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from typing import Any
 import anthropic
 from app.dependencies import get_current_user
 from app.config import ANTHROPIC_API_KEY
+from app.limiter import limiter
 
 router = APIRouter()
 
@@ -49,7 +50,9 @@ class ScanResult(BaseModel):
 
 
 @router.post("", response_model=ScanResult)
+@limiter.limit("5/15minutes")
 def scan_food(
+    request: Request,
     req: ScanRequest,
     current_user: dict = Depends(get_current_user),
 ):

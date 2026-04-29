@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from typing import Optional, Any
 from app.dependencies import get_supabase, get_current_user
+from app.limiter import limiter
 
 router = APIRouter()
 
@@ -47,7 +48,9 @@ def get_workouts(
 
 
 @router.post("")
+@limiter.limit("5/15minutes")
 def log_workout(
+    request: Request,
     req: LogWorkoutRequest,
     current_user: dict = Depends(get_current_user),
     supabase: Any = Depends(get_supabase),

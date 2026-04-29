@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel
 from typing import Any
 from app.dependencies import get_supabase, get_current_user
+from app.limiter import limiter
 
 router = APIRouter()
 
@@ -31,7 +32,9 @@ def get_water(
 
 
 @router.put("")
+@limiter.limit("5/15minutes")
 def update_water(
+    request: Request,
     req: WaterUpdate,
     current_user: dict = Depends(get_current_user),
     supabase: Any = Depends(get_supabase),

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from typing import Any, Optional
 from datetime import date as date_type
 from app.dependencies import get_supabase, get_current_user
+from app.limiter import limiter
 
 router = APIRouter()
 
@@ -41,7 +42,9 @@ def list_weight_logs(
 
 
 @router.post("", response_model=WeightLogOut)
+@limiter.limit("5/15minutes")
 def log_weight(
+    request: Request,
     body: WeightLogIn,
     current_user: dict = Depends(get_current_user),
     supabase: Any = Depends(get_supabase),
