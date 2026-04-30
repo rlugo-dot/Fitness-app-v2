@@ -197,6 +197,12 @@ export interface BookingOut {
   preferred_date: string | null;
   status: string;
   created_at: string;
+  professional?: {
+    name: string;
+    title: string;
+    avatar_emoji: string;
+    avatar_color: string;
+  } | null;
 }
 
 export const getProfessionals = (specialty?: string, q?: string) =>

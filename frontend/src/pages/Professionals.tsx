@@ -4,9 +4,13 @@ import {
   getProfessionals,
   getProfessionalSpecialties,
   bookProfessional,
+  getMyBookings,
 } from '../services/api';
-import type { Professional } from '../services/api';
-import { ChevronLeft, Search, MapPin, Star, Calendar, X, Check, Loader2 } from 'lucide-react';
+import type { Professional, BookingOut } from '../services/api';
+import {
+  ChevronLeft, Search, MapPin, Star, Calendar, X,
+  Check, Loader2, BadgeCheck, Clock, CheckCircle2, XCircle,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 function Avatar({ emoji, color, size = 'md' }: { emoji: string; color: string; size?: 'sm' | 'md' | 'lg' }) {
@@ -18,76 +22,44 @@ function Avatar({ emoji, color, size = 'md' }: { emoji: string; color: string; s
   );
 }
 
-function SpecialtyChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-        active ? 'bg-green-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-green-400'
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
+const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
+  pending:   { label: 'Pending',   icon: <Clock size={11} />,        className: 'bg-amber-50 text-amber-700 border-amber-200' },
+  confirmed: { label: 'Confirmed', icon: <CheckCircle2 size={11} />, className: 'bg-green-50 text-green-700 border-green-200' },
+  cancelled: { label: 'Cancelled', icon: <XCircle size={11} />,      className: 'bg-red-50 text-red-500 border-red-200' },
+};
 
 // ─── Booking Modal ─────────────────────────────────────────────────────────────
-function BookingModal({
-  pro,
-  onClose,
-  onSuccess,
-}: {
-  pro: Professional;
-  onClose: () => void;
-  onSuccess: () => void;
-}) {
+function BookingModal({ pro, onClose, onSuccess }: { pro: Professional; onClose: () => void; onSuccess: () => void }) {
   const [message, setMessage] = useState('');
   const [date, setDate] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const today = new Date().toISOString().split('T')[0];
 
   async function handleSubmit() {
-    if (!message.trim()) {
-      toast.error('Please write a message to the professional');
-      return;
-    }
+    if (!message.trim()) { toast.error('Please write a message'); return; }
     setSubmitting(true);
     try {
-      await bookProfessional({
-        professional_id: pro.id,
-        message: message.trim(),
-        preferred_date: date || undefined,
-      });
-      toast.success(`Booking request sent to ${pro.name}!`);
+      await bookProfessional({ professional_id: pro.id, message: message.trim(), preferred_date: date || undefined });
+      toast.success(`Request sent to ${pro.name.split(',')[0]}!`);
       onSuccess();
-    } catch {
-      toast.error('Failed to send booking request');
-    }
+    } catch { toast.error('Failed to send request'); }
     setSubmitting(false);
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50 px-4 pb-6" onClick={onClose}>
-      <div
-        className="bg-white rounded-2xl w-full max-w-lg p-5 space-y-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
+    <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 px-4 pb-6" onClick={onClose}>
+      <div className="bg-white rounded-3xl w-full max-w-lg p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-3">
           <Avatar emoji={pro.avatar_emoji} color={pro.avatar_color} size="sm" />
           <div className="flex-1 min-w-0">
             <p className="font-bold text-gray-900 text-sm">{pro.name}</p>
             <p className="text-xs text-gray-400 truncate">{pro.title}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
-            <X size={20} />
-          </button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X size={20} /></button>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">
-            Message <span className="text-red-400">*</span>
-          </label>
+          <label className="block text-xs font-medium text-gray-600 mb-1.5">Your message <span className="text-red-400">*</span></label>
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -98,34 +70,25 @@ function BookingModal({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">
-            Preferred date <span className="text-gray-400">(optional)</span>
-          </label>
+          <label className="block text-xs font-medium text-gray-600 mb-1.5">Preferred date <span className="text-gray-400">(optional)</span></label>
           <input
-            type="date"
-            value={date}
-            min={today}
+            type="date" value={date} min={today}
             onChange={(e) => setDate(e.target.value)}
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
 
-        <div className="bg-gray-50 rounded-xl px-3 py-2.5 flex items-center justify-between">
-          <span className="text-xs text-gray-500">Session rate</span>
-          <span className="text-sm font-bold text-green-700">₱{pro.rate_php.toLocaleString()}</span>
+        <div className="bg-green-50 rounded-xl px-4 py-3 flex items-center justify-between">
+          <span className="text-xs text-green-700 font-medium">Session rate</span>
+          <span className="text-lg font-bold text-green-700">₱{pro.rate_php.toLocaleString()}</span>
         </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
+        <div className="flex gap-2 pt-1">
+          <button onClick={onClose} className="flex-1 py-3 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 font-medium">Cancel</button>
           <button
             onClick={handleSubmit}
             disabled={submitting || !message.trim()}
-            className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl disabled:opacity-50 flex items-center justify-center gap-1.5"
+            className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl disabled:opacity-50 flex items-center justify-center gap-1.5"
           >
             {submitting ? <Loader2 size={14} className="animate-spin" /> : <Calendar size={14} />}
             {submitting ? 'Sending…' : 'Send Request'}
@@ -137,35 +100,39 @@ function BookingModal({
 }
 
 // ─── Professional Card ─────────────────────────────────────────────────────────
-function ProCard({ pro, onBook }: { pro: Professional; onBook: (p: Professional) => void }) {
+function ProCard({ pro, booked, onBook }: { pro: Professional; booked: boolean; onBook: (p: Professional) => void }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      {/* Accent bar */}
+      <div className={`h-1 ${pro.is_available ? 'bg-green-500' : 'bg-gray-200'}`} />
+
       <div className="p-4">
-        {/* Top row */}
         <div className="flex items-start gap-3">
           <Avatar emoji={pro.avatar_emoji} color={pro.avatar_color} />
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="font-bold text-gray-900 text-sm leading-snug">{pro.name}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="font-bold text-gray-900 text-sm leading-snug truncate">{pro.name}</p>
+                  <BadgeCheck size={14} className="shrink-0 text-green-500" />
+                </div>
                 <p className="text-xs text-gray-500 mt-0.5 leading-snug">{pro.title}</p>
               </div>
-              {!pro.is_available && (
-                <span className="shrink-0 text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">
-                  Unavailable
-                </span>
-              )}
+              <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                pro.is_available ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
+              }`}>
+                {pro.is_available ? 'Available' : 'Unavailable'}
+              </span>
             </div>
 
-            {/* Meta */}
-            <div className="flex items-center gap-3 mt-2">
+            <div className="flex items-center gap-3 mt-1.5">
               <span className="flex items-center gap-1 text-[11px] text-gray-400">
                 <MapPin size={10} /> {pro.location}
               </span>
               <span className="flex items-center gap-1 text-[11px] text-gray-400">
-                <Star size={10} className="text-yellow-500" fill="currentColor" /> {pro.years_exp}yr exp
+                <Star size={10} className="text-yellow-400" fill="currentColor" /> {pro.years_exp} yr exp
               </span>
             </div>
           </div>
@@ -174,21 +141,18 @@ function ProCard({ pro, onBook }: { pro: Professional; onBook: (p: Professional)
         {/* Specialties */}
         <div className="flex gap-1.5 flex-wrap mt-3">
           {pro.specialties.map((s) => (
-            <span key={s} className="text-[10px] bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium">
+            <span key={s} className="text-[10px] bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium border border-green-100">
               {s}
             </span>
           ))}
         </div>
 
-        {/* Bio (collapsible) */}
+        {/* Bio */}
         <p className={`text-xs text-gray-500 mt-2.5 leading-relaxed ${expanded ? '' : 'line-clamp-2'}`}>
           {pro.bio}
         </p>
         {pro.bio.length > 100 && (
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="text-xs text-green-600 font-medium mt-1 hover:text-green-700"
-          >
+          <button onClick={() => setExpanded((v) => !v)} className="text-xs text-green-600 font-medium mt-1 hover:text-green-700">
             {expanded ? 'Show less' : 'Read more'}
           </button>
         )}
@@ -202,17 +166,71 @@ function ProCard({ pro, onBook }: { pro: Professional; onBook: (p: Professional)
         </div>
         <button
           onClick={() => onBook(pro)}
-          disabled={!pro.is_available}
+          disabled={!pro.is_available || booked}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-            pro.is_available
+            booked
+              ? 'bg-green-100 text-green-700 cursor-default'
+              : pro.is_available
               ? 'bg-green-600 hover:bg-green-700 text-white'
               : 'bg-gray-200 text-gray-400 cursor-not-allowed'
           }`}
         >
-          <Calendar size={14} />
-          {pro.is_available ? 'Book' : 'Unavailable'}
+          {booked ? <><Check size={13} /> Requested</> : <><Calendar size={13} /> Book</>}
         </button>
       </div>
+    </div>
+  );
+}
+
+// ─── My Bookings Tab ───────────────────────────────────────────────────────────
+function MyBookingsTab({ bookings, loading }: { bookings: BookingOut[]; loading: boolean }) {
+  if (loading) return <div className="text-center py-12 text-gray-400 text-sm">Loading bookings…</div>;
+  if (bookings.length === 0) return (
+    <div className="text-center py-16 space-y-2">
+      <p className="text-3xl">📋</p>
+      <p className="text-sm font-medium text-gray-700">No bookings yet</p>
+      <p className="text-xs text-gray-400">Find a professional and send a request</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-3">
+      {bookings.map((b) => {
+        const status = STATUS_CONFIG[b.status] ?? STATUS_CONFIG['pending'];
+        const pro = b.professional;
+        return (
+          <div key={b.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              {pro ? (
+                <Avatar emoji={pro.avatar_emoji} color={pro.avatar_color} size="sm" />
+              ) : (
+                <div className="w-9 h-9 bg-gray-100 rounded-xl" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-gray-900 text-sm">{pro?.name ?? 'Unknown Professional'}</p>
+                <p className="text-xs text-gray-400 truncate">{pro?.title ?? ''}</p>
+              </div>
+              <span className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full border ${status.className}`}>
+                {status.icon} {status.label}
+              </span>
+            </div>
+
+            <p className="text-xs text-gray-600 bg-gray-50 rounded-xl px-3 py-2.5 leading-relaxed line-clamp-2">
+              {b.message}
+            </p>
+
+            <div className="flex items-center justify-between text-[11px] text-gray-400">
+              <span>Sent {new Date(b.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+              {b.preferred_date && (
+                <span className="flex items-center gap-1">
+                  <Calendar size={10} />
+                  Preferred: {new Date(b.preferred_date + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -220,28 +238,28 @@ function ProCard({ pro, onBook }: { pro: Professional; onBook: (p: Professional)
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function Professionals() {
   const navigate = useNavigate();
+  const [tab, setTab] = useState<'find' | 'bookings'>('find');
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [specialties, setSpecialties] = useState<string[]>([]);
+  const [bookings, setBookings] = useState<BookingOut[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bookingsLoading, setBookingsLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [activeSpecialty, setActiveSpecialty] = useState('');
   const [bookingPro, setBookingPro] = useState<Professional | null>(null);
-  const [bookedIds, setBookedIds] = useState<Set<string>>(() => {
-    try {
-      const stored = localStorage.getItem('nutrisyon_booked_pros');
-      return stored ? new Set(JSON.parse(stored)) : new Set();
-    } catch { return new Set(); }
-  });
+  const [bookedIds, setBookedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    Promise.all([
-      getProfessionals(),
-      getProfessionalSpecialties(),
-    ]).then(([pros, specs]) => {
+    Promise.all([getProfessionals(), getProfessionalSpecialties()]).then(([pros, specs]) => {
       setProfessionals(pros);
       setSpecialties(specs);
       setLoading(false);
     });
+    getMyBookings().then((bs) => {
+      setBookings(bs);
+      setBookedIds(new Set(bs.map((b) => b.professional_id)));
+      setBookingsLoading(false);
+    }).catch(() => setBookingsLoading(false));
   }, []);
 
   const filtered = professionals.filter((p) => {
@@ -252,13 +270,16 @@ export default function Professionals() {
     return matchSpec && matchQ;
   });
 
+  const available = filtered.filter((p) => p.is_available);
+  const unavailable = filtered.filter((p) => !p.is_available);
+
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
       {/* Header */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3">
           <div className="flex items-center gap-3 mb-3">
-            <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")} className="text-gray-500 hover:text-gray-800">
+            <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} className="text-gray-500 hover:text-gray-800">
               <ChevronLeft size={22} />
             </button>
             <div>
@@ -267,40 +288,63 @@ export default function Professionals() {
             </div>
           </div>
 
-          {/* Search */}
-          <div className="relative mb-3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name, specialty…"
-              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-green-500 outline-none text-sm"
-            />
-            {query && (
-              <button onClick={() => setQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                <X size={14} />
-              </button>
-            )}
+          {/* Tabs */}
+          <div className="flex bg-gray-100 rounded-xl p-1 mb-3">
+            <button
+              onClick={() => setTab('find')}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${tab === 'find' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}
+            >
+              Find a Pro
+            </button>
+            <button
+              onClick={() => setTab('bookings')}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all relative ${tab === 'bookings' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}
+            >
+              My Bookings
+              {bookings.length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-green-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {bookings.length}
+                </span>
+              )}
+            </button>
           </div>
 
-          {/* Specialty filter */}
-          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-            <SpecialtyChip label="All" active={activeSpecialty === ''} onClick={() => setActiveSpecialty('')} />
-            {specialties.map((s) => (
-              <SpecialtyChip
-                key={s}
-                label={s}
-                active={activeSpecialty === s}
-                onClick={() => setActiveSpecialty(activeSpecialty === s ? '' : s)}
-              />
-            ))}
-          </div>
+          {/* Search + filters (find tab only) */}
+          {tab === 'find' && (
+            <>
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+                <input
+                  type="text" value={query} onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search by name, specialty…"
+                  className="w-full pl-9 pr-9 py-2.5 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-green-500 outline-none text-sm"
+                />
+                {query && (
+                  <button onClick={() => setQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"><X size={14} /></button>
+                )}
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                {['', ...specialties].map((s) => (
+                  <button
+                    key={s || 'all'}
+                    onClick={() => setActiveSpecialty(activeSpecialty === s ? '' : s)}
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      activeSpecialty === s ? 'bg-green-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-green-400'
+                    }`}
+                  >
+                    {s || 'All'}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-3">
-        {loading ? (
+        {tab === 'bookings' ? (
+          <MyBookingsTab bookings={bookings} loading={bookingsLoading} />
+        ) : loading ? (
           <div className="text-center py-12 text-gray-400 text-sm">Loading professionals…</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-12 text-gray-400">
@@ -309,35 +353,32 @@ export default function Professionals() {
           </div>
         ) : (
           <>
-            <p className="text-xs text-gray-400">
-              {filtered.length} professional{filtered.length !== 1 ? 's' : ''} available
-            </p>
-            {filtered.map((pro) => (
-              <ProCard
-                key={pro.id}
-                pro={pro}
+            <p className="text-xs text-gray-400">{available.length} available · {unavailable.length} unavailable</p>
+            {available.map((pro) => (
+              <ProCard key={pro.id} pro={pro} booked={bookedIds.has(pro.id)}
                 onBook={(p) => {
-                  if (bookedIds.has(p.id)) {
-                    toast.info('You already sent a request to this professional.');
-                    return;
-                  }
+                  if (bookedIds.has(p.id)) { toast.info('You already sent a request.'); return; }
                   setBookingPro(p);
                 }}
               />
+            ))}
+            {unavailable.length > 0 && available.length > 0 && (
+              <p className="text-xs text-gray-400 pt-2">Currently unavailable</p>
+            )}
+            {unavailable.map((pro) => (
+              <ProCard key={pro.id} pro={pro} booked={bookedIds.has(pro.id)} onBook={() => {}} />
             ))}
           </>
         )}
       </div>
 
-      {/* Booking modal */}
       {bookingPro && (
         <BookingModal
           pro={bookingPro}
           onClose={() => setBookingPro(null)}
           onSuccess={() => {
-            const newIds = new Set([...bookedIds, bookingPro.id]);
-            setBookedIds(newIds);
-            try { localStorage.setItem('nutrisyon_booked_pros', JSON.stringify([...newIds])); } catch {}
+            setBookedIds((prev) => new Set([...prev, bookingPro.id]));
+            getMyBookings().then(setBookings).catch(() => {});
             setBookingPro(null);
           }}
         />

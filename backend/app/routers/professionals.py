@@ -27,6 +27,13 @@ class BookingRequest(BaseModel):
     preferred_date: Optional[str] = None   # YYYY-MM-DD
 
 
+class ProSummary(BaseModel):
+    name: str
+    title: str
+    avatar_emoji: str
+    avatar_color: str
+
+
 class BookingOut(BaseModel):
     id: str
     professional_id: str
@@ -34,6 +41,7 @@ class BookingOut(BaseModel):
     preferred_date: Optional[str]
     status: str
     created_at: str
+    professional: Optional[ProSummary] = None
 
 
 # ─── Directory ────────────────────────────────────────────────────────────────
@@ -122,9 +130,14 @@ def my_bookings(
 ):
     result = (
         supabase.table("booking_requests")
-        .select("*")
+        .select("*, professionals(name, title, avatar_emoji, avatar_color)")
         .eq("user_id", current_user["id"])
         .order("created_at", desc=True)
         .execute()
     )
-    return result.data or []
+    rows = []
+    for row in (result.data or []):
+        pro_data = row.pop("professionals", None)
+        row["professional"] = pro_data
+        rows.append(row)
+    return rows
