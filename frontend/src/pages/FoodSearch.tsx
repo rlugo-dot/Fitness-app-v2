@@ -130,8 +130,26 @@ export default function FoodSearch() {
   async function handleLog(food: Food) {
     const qty = quantities[food.id] || 1;
     setLogging(food.id);
-    await logFood({ food_id: food.id, meal_type: selectedMeal, quantity: qty, log_date: logDate });
-    setLogged((prev) => new Set([...prev, food.id]));
+    try {
+      const scale = food.default_serving / 100 * qty;
+      await logFood({
+        food_id: food.id,
+        meal_type: selectedMeal,
+        quantity: qty,
+        log_date: logDate,
+        // Custom foods: pass nutrition directly since they aren't in the static DB
+        ...(food.is_custom && {
+          food_name: food.name,
+          calories: Math.round(food.calories * scale),
+          protein_g: Math.round(food.protein_g * scale),
+          carbs_g: Math.round(food.carbs_g * scale),
+          fat_g: Math.round(food.fat_g * scale),
+        }),
+      });
+      setLogged((prev) => new Set([...prev, food.id]));
+    } catch {
+      toast.error('Failed to log food');
+    }
     setLogging(null);
   }
 
