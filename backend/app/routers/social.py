@@ -155,6 +155,7 @@ def search_users(
     return [
         UserResult(id=u["id"], full_name=u["full_name"], is_following=u["id"] in following_ids)
         for u in users
+        if u.get("full_name")
     ]
 
 

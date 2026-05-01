@@ -86,7 +86,7 @@ def log_food(
         }
 
     result = supabase.table("food_logs").insert(record).execute()
-    return result.data[0]
+    return result.data[0] if result.data else record
 
 
 @router.delete("/{log_id}")

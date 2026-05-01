@@ -11,8 +11,13 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid authorization header")
     token = authorization.removeprefix("Bearer ").strip()
-    client = get_supabase()
-    result = client.auth.get_user(token)
-    if not result or not result.user:
+    try:
+        client = get_supabase()
+        result = client.auth.get_user(token)
+        if not result or not result.user:
+            raise HTTPException(status_code=401, detail="Invalid or expired token")
+        return {"id": result.user.id, "email": result.user.email}
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
-    return {"id": result.user.id, "email": result.user.email}

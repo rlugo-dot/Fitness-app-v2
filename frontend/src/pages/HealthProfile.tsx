@@ -21,12 +21,14 @@ export default function HealthProfile() {
 
   useEffect(() => {
     async function load() {
-      const [conditions, myData] = await Promise.all([
-        getHealthConditions(),
-        getMyConditions(),
-      ]);
-      setAllConditions(conditions);
-      setSelected(myData.conditions);
+      try {
+        const [conditions, myData] = await Promise.all([
+          getHealthConditions(),
+          getMyConditions(),
+        ]);
+        setAllConditions(conditions);
+        setSelected(myData.conditions);
+      } catch {}
       setLoading(false);
     }
     load();
@@ -34,7 +36,7 @@ export default function HealthProfile() {
 
   useEffect(() => {
     if (selected.length > 0) {
-      getDietRecommendations().then(setRecommendations);
+      getDietRecommendations().then(setRecommendations).catch(() => {});
     } else {
       setRecommendations([]);
     }
@@ -48,12 +50,14 @@ export default function HealthProfile() {
 
   async function handleSave() {
     setSaving(true);
-    await updateMyConditions(selected);
-    const recs = selected.length > 0 ? await getDietRecommendations() : [];
-    setRecommendations(recs);
-    setSaved(true);
+    try {
+      await updateMyConditions(selected);
+      const recs = selected.length > 0 ? await getDietRecommendations() : [];
+      setRecommendations(recs);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {}
     setSaving(false);
-    setTimeout(() => setSaved(false), 2000);
   }
 
   return (

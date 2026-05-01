@@ -97,6 +97,9 @@ export default function FoodSearch() {
   const [barcodeServingG, setBarcodeServingG] = useState(100);
   const [barcodeLogged, setBarcodeLogged] = useState(false);
 
+  const searchSeqRef = useRef(0);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
   // Scan state
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [scanImage, setScanImage] = useState<string | null>(null);
@@ -106,24 +109,36 @@ export default function FoodSearch() {
   const [loggedScan, setLoggedScan] = useState(false);
 
   useEffect(() => {
-    getFoodCategories().then(setCategories);
+    getFoodCategories().then(setCategories).catch(() => {});
     loadFoods('', '');
   }, []);
 
   async function loadFoods(q: string, cat: string) {
+    const seq = ++searchSeqRef.current;
     setLoading(true);
-    const results = await searchFoods(q || undefined, cat || undefined);
-    setFoods(results);
-    setLoading(false);
+    try {
+      const results = await searchFoods(q || undefined, cat || undefined);
+      if (searchSeqRef.current === seq) {
+        setFoods(results);
+        setLoading(false);
+      }
+    } catch {
+      if (searchSeqRef.current === seq) {
+        setFoods([]);
+        setLoading(false);
+      }
+    }
   }
 
   function handleSearch(q: string) {
     setQuery(q);
-    loadFoods(q, category);
+    clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => loadFoods(q, category), 300);
   }
 
   function handleCategory(cat: string) {
     setCategory(cat);
+    clearTimeout(searchTimerRef.current);
     loadFoods(query, cat);
   }
 

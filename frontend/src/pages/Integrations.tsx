@@ -168,8 +168,12 @@ export default function Integrations() {
   }
 
   async function handleDeleteWeight(id: string) {
-    await deleteWeightLog(id);
-    setWeightLogs((prev) => prev.filter((l) => l.id !== id));
+    try {
+      await deleteWeightLog(id);
+      setWeightLogs((prev) => prev.filter((l) => l.id !== id));
+    } catch {
+      toast.error('Failed to delete weight log');
+    }
   }
 
   const latestWeight = weightLogs[0];

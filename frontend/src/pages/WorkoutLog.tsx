@@ -40,7 +40,11 @@ export default function WorkoutLog() {
 
   const loadWorkouts = useCallback(async () => {
     setLoading(true);
-    setWorkouts(await getWorkouts(date));
+    try {
+      setWorkouts(await getWorkouts(date));
+    } catch {
+      setWorkouts([]);
+    }
     setLoading(false);
   }, [date]);
 
@@ -79,24 +83,28 @@ export default function WorkoutLog() {
   async function handleSubmit() {
     if (!duration || parseInt(duration) <= 0) return;
     setSaving(true);
-    const validExercises = exercises.filter(e => e.name.trim());
-    await logWorkout({
-      workout_type: type,
-      name: name || WORKOUT_TYPES.find(t => t.value === type)!.label,
-      duration_min: parseInt(duration),
-      exercises: validExercises,
-      log_date: date,
-      is_shared: shareToFeed,
-      caption: shareToFeed && caption.trim() ? caption.trim() : undefined,
-    });
-    resetForm();
-    loadWorkouts();
+    try {
+      const validExercises = exercises.filter(e => e.name.trim());
+      await logWorkout({
+        workout_type: type,
+        name: name || WORKOUT_TYPES.find(t => t.value === type)!.label,
+        duration_min: parseInt(duration),
+        exercises: validExercises,
+        log_date: date,
+        is_shared: shareToFeed,
+        caption: shareToFeed && caption.trim() ? caption.trim() : undefined,
+      });
+      resetForm();
+      loadWorkouts();
+    } catch {}
     setSaving(false);
   }
 
   async function handleDelete(id: string) {
-    await deleteWorkout(id);
-    loadWorkouts();
+    try {
+      await deleteWorkout(id);
+      loadWorkouts();
+    } catch {}
   }
 
   const totalCalories = workouts.reduce((s, w) => s + w.calories_burned, 0);

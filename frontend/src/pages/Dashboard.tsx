@@ -182,19 +182,25 @@ export default function Dashboard({ profile, onSignOut }: Props) {
   const [water, setWater] = useState<WaterLog>({ glasses: 0, goal: 8 });
   const [workoutSummary, setWorkoutSummary] = useState<WorkoutSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [mealsData, summaryData, waterData, workoutData] = await Promise.all([
-      getMeals(date),
-      getDailySummary(date),
-      getWater(date),
-      getWorkoutSummary(date),
-    ]);
-    setLogs(mealsData);
-    setSummary(summaryData);
-    setWater(waterData);
-    setWorkoutSummary(workoutData);
+    setLoadError(false);
+    try {
+      const [mealsData, summaryData, waterData, workoutData] = await Promise.all([
+        getMeals(date),
+        getDailySummary(date),
+        getWater(date),
+        getWorkoutSummary(date),
+      ]);
+      setLogs(mealsData);
+      setSummary(summaryData);
+      setWater(waterData);
+      setWorkoutSummary(workoutData);
+    } catch {
+      setLoadError(true);
+    }
     setLoading(false);
   }, [date]);
 
@@ -203,8 +209,10 @@ export default function Dashboard({ profile, onSignOut }: Props) {
   }, [loadData]);
 
   async function handleDeleteLog(id: string) {
-    await deleteMealLog(id);
-    loadData();
+    try {
+      await deleteMealLog(id);
+      loadData();
+    } catch {}
   }
 
   async function handleWaterUpdate(glasses: number) {
@@ -274,6 +282,13 @@ export default function Dashboard({ profile, onSignOut }: Props) {
       <div className="max-w-lg mx-auto px-4 py-5 space-y-4">
         {loading ? (
           <div className="text-center py-12 text-gray-400">Loading…</div>
+        ) : loadError ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-sm mb-3">Failed to load data.</p>
+            <button onClick={loadData} className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-medium">
+              Try again
+            </button>
+          </div>
         ) : (
           <>
             {/* Calorie Card */}

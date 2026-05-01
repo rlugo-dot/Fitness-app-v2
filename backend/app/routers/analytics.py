@@ -76,10 +76,9 @@ def get_overview(
         supabase.table("profiles")
         .select("daily_calorie_goal")
         .eq("id", uid)
-        .single()
         .execute()
     )
-    calorie_goal = (profile_res.data or {}).get("daily_calorie_goal", 2000)
+    calorie_goal = (profile_res.data[0] if profile_res.data else {}).get("daily_calorie_goal", 2000)
 
     # Food logs in range
     food_res = (
