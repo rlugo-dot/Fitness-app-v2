@@ -19,25 +19,16 @@ export function useAuth() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  const signIn = (email: string, password: string) =>
-    supabase.auth.signInWithPassword({ email, password });
-
-  const signUp = async (email: string, password: string, fullName: string) => {
-    const result = await supabase.auth.signUp({
+  const sendOtp = (email: string) =>
+    supabase.auth.signInWithOtp({
       email,
-      password,
-      options: { data: { full_name: fullName } },
+      options: { shouldCreateUser: true },
     });
-    if (result.data.user && !result.error) {
-      await supabase.from('profiles').upsert(
-        { id: result.data.user.id, full_name: fullName },
-        { onConflict: 'id' }
-      );
-    }
-    return result;
-  };
+
+  const verifyOtp = (email: string, token: string) =>
+    supabase.auth.verifyOtp({ email, token, type: 'email' });
 
   const signOut = () => supabase.auth.signOut();
 
-  return { session, loading, signIn, signUp, signOut };
+  return { session, loading, sendOtp, verifyOtp, signOut };
 }

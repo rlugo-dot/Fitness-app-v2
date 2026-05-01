@@ -18,7 +18,7 @@ import Professionals from './pages/Professionals';
 import HealthProfile from './pages/HealthProfile';
 
 function AppContent() {
-  const { session, loading: authLoading, signIn, signUp, signOut } = useAuth();
+  const { session, loading: authLoading, sendOtp, verifyOtp, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState(false);
@@ -45,7 +45,7 @@ function AppContent() {
   }
 
   if (!session) {
-    return <Login onLogin={signIn} onSignUp={signUp} />;
+    return <Login onSendOtp={sendOtp} onVerifyOtp={verifyOtp} />;
   }
 
   if (profileError) {
