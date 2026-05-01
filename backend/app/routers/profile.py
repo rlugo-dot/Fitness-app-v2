@@ -20,10 +20,17 @@ def get_profile(
     current_user: dict = Depends(get_current_user),
     supabase: Any = Depends(get_supabase),
 ):
-    result = supabase.table("profiles").select("*").eq("id", current_user["id"]).single().execute()
-    if not result.data:
-        raise HTTPException(status_code=404, detail="Profile not found")
-    return result.data
+    result = supabase.table("profiles").select("*").eq("id", current_user["id"]).execute()
+    if result.data:
+        return result.data[0]
+    # Auto-create profile for new users who skipped client-side creation
+    full_name = (current_user.get("user_metadata") or {}).get("full_name") or None
+    insert = supabase.table("profiles").insert({
+        "id": current_user["id"],
+        "full_name": full_name,
+        "daily_calorie_goal": 2000,
+    }).execute()
+    return insert.data[0] if insert.data else {"id": current_user["id"], "full_name": full_name}
 
 
 @router.patch("/me")

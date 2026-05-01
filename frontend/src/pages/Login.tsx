@@ -3,7 +3,7 @@ import { Leaf } from 'lucide-react';
 
 interface Props {
   onLogin: (email: string, password: string) => Promise<{ error: { message: string } | null }>;
-  onSignUp: (email: string, password: string, fullName: string) => Promise<{ error: { message: string } | null }>;
+  onSignUp: (email: string, password: string, fullName: string) => Promise<{ data?: { session?: unknown } | null; error: { message: string } | null }>;
 }
 
 export default function Login({ onLogin, onSignUp }: Props) {
@@ -23,16 +23,29 @@ export default function Login({ onLogin, onSignUp }: Props) {
 
     try {
       if (mode === 'signup') {
-        const { error: signUpError } = await onSignUp(email, password, fullName);
+        const { data, error: signUpError } = await onSignUp(email, password, fullName);
         if (signUpError) {
           setError(signUpError.message);
+          setLoading(false);
+          return;
+        }
+        // No session means Supabase requires email confirmation first
+        if (!data?.session) {
+          setSuccess('Account created! Check your email for a confirmation link, then sign in here.');
+          setMode('signin');
           setLoading(false);
           return;
         }
         setSuccess('Account created! Signing you in…');
       }
       const { error: signInError } = await onLogin(email, password);
-      if (signInError) setError(signInError.message);
+      if (signInError) {
+        if (signInError.message.toLowerCase().includes('email not confirmed')) {
+          setError('Please check your email and click the confirmation link before signing in.');
+        } else {
+          setError(signInError.message);
+        }
+      }
     } catch {
       setError('Something went wrong. Please try again.');
     }
