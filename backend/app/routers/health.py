@@ -25,10 +25,9 @@ def get_my_conditions(
         supabase.table("profiles")
         .select("health_conditions")
         .eq("id", current_user["id"])
-        .single()
         .execute()
     )
-    return {"conditions": result.data.get("health_conditions", []) if result.data else []}
+    return {"conditions": (result.data[0].get("health_conditions") or []) if result.data else []}
 
 
 @router.put("/my-conditions")
@@ -52,8 +51,7 @@ def get_recommendations(
         supabase.table("profiles")
         .select("health_conditions")
         .eq("id", current_user["id"])
-        .single()
         .execute()
     )
-    conditions = result.data.get("health_conditions", []) if result.data else []
+    conditions = (result.data[0].get("health_conditions") or []) if result.data else []
     return get_recommendations_for_conditions(conditions)

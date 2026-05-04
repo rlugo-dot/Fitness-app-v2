@@ -208,6 +208,7 @@ export default function FoodSearch() {
         protein_g: scanResult.protein_g,
         carbs_g: scanResult.carbs_g,
         fat_g: scanResult.fat_g,
+        fiber_g: scanResult.fiber_g,
       });
       setLoggedScan(true);
       toast.success(`${scanResult.food_name} logged!`);
@@ -257,8 +258,9 @@ export default function FoodSearch() {
     try {
       const product = await lookupBarcode(code);
       setBarcodeProduct(product);
-      const grams = parseInt(product.serving_size) || 100;
-      setBarcodeServingG(isNaN(grams) ? 100 : grams);
+      const numericMatch = product.serving_size.match(/\d+(\.\d+)?/);
+      const grams = numericMatch ? Math.round(parseFloat(numericMatch[0])) : 100;
+      setBarcodeServingG(grams > 0 ? grams : 100);
     } catch {
       toast.error('Product not found. Try searching by name instead.');
       setBarcodeScanning(true);

@@ -48,7 +48,7 @@ def get_workouts(
 
 
 @router.post("")
-@limiter.limit("5/15minutes")
+@limiter.limit("20/15minutes")
 def log_workout(
     request: Request,
     req: LogWorkoutRequest,

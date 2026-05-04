@@ -40,7 +40,7 @@ def get_meals(
 
 
 @router.post("")
-@limiter.limit("5/15minutes")
+@limiter.limit("30/15minutes")
 def log_food(
     request: Request,
     req: LogFoodRequest,

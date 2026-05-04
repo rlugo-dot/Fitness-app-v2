@@ -103,10 +103,10 @@ def book_professional(
     supabase: Any = Depends(get_supabase),
 ):
     # Verify professional exists
-    pro = supabase.table("professionals").select("id, is_available").eq("id", body.professional_id).single().execute()
+    pro = supabase.table("professionals").select("id, is_available").eq("id", body.professional_id).execute()
     if not pro.data:
         raise HTTPException(status_code=404, detail="Professional not found")
-    if not pro.data.get("is_available"):
+    if not pro.data[0].get("is_available"):
         raise HTTPException(status_code=400, detail="Professional is not currently accepting bookings")
 
     payload = {

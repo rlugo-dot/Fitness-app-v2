@@ -32,7 +32,7 @@ def get_water(
 
 
 @router.put("")
-@limiter.limit("5/15minutes")
+@limiter.limit("60/minute")
 def update_water(
     request: Request,
     req: WaterUpdate,
