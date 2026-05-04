@@ -347,9 +347,13 @@ export default function Professionals() {
         ) : loading ? (
           <div className="text-center py-12 text-gray-400 text-sm">Loading professionals…</div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-gray-400 space-y-2">
+            <p className="text-3xl">🔍</p>
             <p className="text-sm">No professionals found.</p>
-            <p className="text-xs mt-1">Try a different specialty or search term.</p>
+            <p className="text-xs">Try a different specialty or search term.</p>
+            <a href="/professionals/join" className="inline-block mt-2 text-xs text-green-600 font-medium hover:text-green-700">
+              Are you a professional? Apply to join →
+            </a>
           </div>
         ) : (
           <>
@@ -368,6 +372,19 @@ export default function Professionals() {
             {unavailable.map((pro) => (
               <ProCard key={pro.id} pro={pro} booked={bookedIds.has(pro.id)} onBook={() => {}} />
             ))}
+
+            {/* Join CTA */}
+            <div className="mt-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
+              <p className="text-2xl mb-2">🩺</p>
+              <p className="text-sm font-semibold text-gray-800">Are you a health professional?</p>
+              <p className="text-xs text-gray-400 mt-1 mb-3">Join Phitness and connect with Filipino health seekers</p>
+              <a
+                href="/professionals/join"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition-colors"
+              >
+                Apply to Join →
+              </a>
+            </div>
           </>
         )}
       </div>
