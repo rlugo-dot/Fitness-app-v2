@@ -98,7 +98,7 @@ export default function FoodSearch() {
   const [barcodeLogged, setBarcodeLogged] = useState(false);
 
   const searchSeqRef = useRef(0);
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Scan state
   const fileInputRef = useRef<HTMLInputElement>(null);
