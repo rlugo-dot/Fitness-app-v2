@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useAuth } from './hooks/useAuth';
 import { getProfile } from './services/api';
@@ -16,12 +16,17 @@ import GymMap from './pages/GymMap';
 import Progress from './pages/Progress';
 import Professionals from './pages/Professionals';
 import HealthProfile from './pages/HealthProfile';
+import ProfessionalSignup from './pages/ProfessionalSignup';
+import AdminPanel from './pages/AdminPanel';
+
+const ADMIN_EMAIL = 'richardlyonneuygo@gmail.com';
 
 function AppContent() {
   const { session, loading: authLoading, sendOtp, verifyOtp, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     if (!session) { setProfile(null); setProfileLoading(false); return; }
@@ -32,6 +37,11 @@ function AppContent() {
       .catch(() => setProfileError(true))
       .finally(() => setProfileLoading(false));
   }, [session]);
+
+  // Public route — no auth required (after all hooks)
+  if (location.pathname === '/professionals/join') {
+    return <ProfessionalSignup />;
+  }
 
   if (authLoading || (session && (profileLoading || (!profile && !profileError)))) {
     return (
@@ -62,6 +72,7 @@ function AppContent() {
   }
 
   const needsSetup = profile && !profile.full_name;
+  const isAdmin = session?.user?.email === ADMIN_EMAIL;
 
   return (
     <Routes>
@@ -92,6 +103,7 @@ function AppContent() {
           <Route path="/progress" element={<Progress />} />
           <Route path="/professionals" element={<Professionals />} />
           <Route path="/health" element={<HealthProfile />} />
+          {isAdmin && <Route path="/admin" element={<AdminPanel />} />}
           <Route
             path="/profile"
             element={

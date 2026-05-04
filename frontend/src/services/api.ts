@@ -328,3 +328,56 @@ export const getPushStatus = () =>
 
 export const sendTestNotification = () =>
   api.post('/notifications/test').then((r) => r.data);
+
+// ─── Professional Applications ────────────────────────────────────────────────
+export interface ProfessionalApplication {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  title: string;
+  specialties: string[];
+  bio: string;
+  location: string;
+  years_exp: number;
+  rate_php: number;
+  avatar_emoji: string;
+  avatar_color: string;
+  status: 'pending' | 'approved' | 'rejected' | 'active';
+  payment_status: 'unpaid' | 'paid';
+  applied_at: string;
+  reviewed_at: string | null;
+  reviewer_notes: string | null;
+}
+
+export interface ApplicationInput {
+  name: string;
+  email: string;
+  phone?: string;
+  title: string;
+  specialties: string[];
+  bio: string;
+  location: string;
+  years_exp: number;
+  rate_php: number;
+  avatar_emoji: string;
+  avatar_color: string;
+}
+
+export const submitApplication = (data: ApplicationInput) =>
+  api.post('/applications', data).then((r) => r.data);
+
+export const getApplicationFee = () =>
+  api.get<{ monthly_fee_php: number }>('/applications/fee').then((r) => r.data);
+
+export const getApplications = (status?: string) =>
+  api.get<ProfessionalApplication[]>('/applications', { params: { status } }).then((r) => r.data);
+
+export const approveApplication = (id: string, notes?: string) =>
+  api.patch(`/applications/${id}/approve`, { notes }).then((r) => r.data);
+
+export const rejectApplication = (id: string, notes?: string) =>
+  api.patch(`/applications/${id}/reject`, { notes }).then((r) => r.data);
+
+export const activateApplication = (id: string) =>
+  api.patch(`/applications/${id}/activate`).then((r) => r.data);
