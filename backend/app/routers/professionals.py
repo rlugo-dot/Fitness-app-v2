@@ -87,12 +87,11 @@ def get_professional(pro_id: str, supabase: Any = Depends(get_supabase)):
         supabase.table("professionals")
         .select("id, name, title, specialties, bio, rate_php, location, years_exp, avatar_emoji, avatar_color, is_available")
         .eq("id", pro_id)
-        .single()
         .execute()
     )
     if not result.data:
         raise HTTPException(status_code=404, detail="Professional not found")
-    return result.data
+    return result.data[0]
 
 
 # ─── Booking requests ─────────────────────────────────────────────────────────
