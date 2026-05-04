@@ -86,7 +86,7 @@ def send_test(
         raise HTTPException(status_code=404, detail="No subscription found")
     sub = result.data[0]
     _send_push(sub["endpoint"], sub["p256dh"], sub["auth"], {
-        "title": "Nutrisyon 🌿",
+        "title": "Phitness 💪",
         "body": "Push notifications are working!",
         "url": "/",
     })
@@ -108,7 +108,7 @@ def send_reminders(
     hour = datetime.now(ph).hour
 
     if 7 <= hour <= 9:
-        payload = {"title": "Breakfast time! 🌅", "body": "Don't forget to log your breakfast in Nutrisyon.", "url": "/food-search?meal=breakfast", "tag": "meal-breakfast"}
+        payload = {"title": "Breakfast time! 🌅", "body": "Don't forget to log your breakfast in Phitness.", "url": "/food-search?meal=breakfast", "tag": "meal-breakfast"}
     elif 11 <= hour <= 13:
         payload = {"title": "Lunchtime! ☀️", "body": "Have you logged your lunch yet?", "url": "/food-search?meal=lunch", "tag": "meal-lunch"}
     elif 17 <= hour <= 19:

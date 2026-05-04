@@ -38,7 +38,7 @@ function AppContent() {
       <div className="page-enter min-h-screen bg-green-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-4xl mb-3">🌿</div>
-          <p className="text-gray-500 text-sm">Loading Nutrisyon…</p>
+          <p className="text-gray-500 text-sm">Loading Phitness…</p>
         </div>
       </div>
     );

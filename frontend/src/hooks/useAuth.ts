@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
-const SESSION_KEY = 'nutrisyon_login_at';
+const SESSION_KEY = 'phitness_login_at';
 const SESSION_MAX_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 function isSessionExpired(): boolean {

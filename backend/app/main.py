@@ -6,7 +6,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from app.routers import profile, foods, meals, water, workouts, health, food_scan, integrations, weight, social, recommendations, analytics, professionals, notifications
 from app.limiter import limiter
 
-app = FastAPI(title="Nutrisyon API", version="1.0.0")
+app = FastAPI(title="Phitness API", version="1.0.0")
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
