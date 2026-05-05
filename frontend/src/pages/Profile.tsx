@@ -248,6 +248,12 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
               >
                 <span>👩‍⚕️</span> Find a Professional
               </button>
+              <a
+                href="/professionals/join"
+                className="w-full py-3 bg-green-50 hover:bg-green-100 text-green-700 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+              >
+                <span>🩺</span> Join as a Professional
+              </a>
               <button
                 type="button"
                 onClick={() => navigate('/integrations')}
