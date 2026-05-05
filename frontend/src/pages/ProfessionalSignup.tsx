@@ -251,7 +251,7 @@ export default function ProfessionalSignup() {
                   {COLORS.map(c => (
                     <button key={c.value} onClick={() => set('avatar_color', c.value)}
                       title={c.label}
-                      className={`w-8 h-8 rounded-full transition-all ${form.avatar_color === c.value ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : ''}`}
+                      className={`w-10 h-10 rounded-full transition-all ${form.avatar_color === c.value ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : ''}`}
                       style={{ backgroundColor: c.value }} />
                   ))}
                 </div>
@@ -294,7 +294,7 @@ export default function ProfessionalSignup() {
                 <Row label="Experience" value={`${form.years_exp} year${form.years_exp !== 1 ? 's' : ''}`} />
                 <Row label="Rate" value={`₱${form.rate_php.toLocaleString()}/hr`} />
                 <div className="flex gap-2 pt-1">
-                  <span className="text-xs text-gray-500 w-24 shrink-0 pt-0.5">Specialties</span>
+                  <span className="text-xs text-gray-500 w-20 shrink-0 pt-0.5">Specialties</span>
                   <div className="flex flex-wrap gap-1">
                     {form.specialties.map(s => (
                       <span key={s} className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">{s}</span>
@@ -361,8 +361,8 @@ function Field({ label, children, colSpan }: { label: string; children: React.Re
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex gap-2">
-      <span className="text-xs text-gray-500 w-24 shrink-0 pt-0.5">{label}</span>
-      <span className="text-sm text-gray-900 font-medium">{value}</span>
+      <span className="text-xs text-gray-500 w-20 shrink-0 pt-0.5">{label}</span>
+      <span className="text-sm text-gray-900 font-medium break-words min-w-0">{value}</span>
     </div>
   );
 }

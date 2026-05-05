@@ -8,6 +8,7 @@ import {
 } from '../services/api';
 import type { HealthCondition, DietRecommendation } from '../types';
 import { ChevronLeft, ChevronDown, ChevronUp, Check, UserSearch } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function HealthProfile() {
   const navigate = useNavigate();
@@ -28,7 +29,9 @@ export default function HealthProfile() {
         ]);
         setAllConditions(conditions);
         setSelected(myData.conditions);
-      } catch {}
+      } catch {
+        toast.error('Failed to load health conditions');
+      }
       setLoading(false);
     }
     load();
@@ -56,7 +59,9 @@ export default function HealthProfile() {
       setRecommendations(recs);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch {}
+    } catch {
+      toast.error('Failed to save. Please try again.');
+    }
     setSaving(false);
   }
 

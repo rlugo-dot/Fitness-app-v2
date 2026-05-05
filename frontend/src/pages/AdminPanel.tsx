@@ -66,7 +66,7 @@ export default function AdminPanel() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {TABS.map(t => (
             <div key={t.key} className="bg-white rounded-xl p-3 shadow-sm text-center">
               <p className="text-2xl font-bold text-gray-900">{counts[t.key]}</p>
@@ -76,12 +76,12 @@ export default function AdminPanel() {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 mb-4">
+        <div className="flex overflow-x-auto border-b border-gray-200 mb-4 no-scrollbar">
           {TABS.map(t => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors capitalize ${
+              className={`shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors capitalize ${
                 tab === t.key ? t.color : 'text-gray-400 border-transparent hover:text-gray-600'
               }`}>
               {t.label}
@@ -198,7 +198,7 @@ function AppCard({ app, onRefresh }: { app: ProfessionalApplication; onRefresh: 
       {/* Expanded details */}
       {expanded && (
         <div className="px-4 pb-4 border-t border-gray-50 pt-3 space-y-3">
-          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+          <div className="grid grid-cols-3 gap-2 text-center text-xs min-w-0">
             <div className="bg-gray-50 rounded-lg p-2">
               <p className="font-semibold text-gray-900">{app.years_exp}y</p>
               <p className="text-gray-400">Experience</p>
