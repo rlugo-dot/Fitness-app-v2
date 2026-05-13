@@ -2,7 +2,28 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getWorkouts, logWorkout, deleteWorkout } from '../services/api';
 import type { WorkoutLog, WorkoutType, Exercise } from '../types';
-import { ChevronLeft, Plus, Trash2, Flame, Clock, Dumbbell, MapPin } from 'lucide-react';
+import { ChevronLeft, Plus, Trash2, Flame, Clock, Dumbbell, MapPin, Loader2 } from 'lucide-react';
+
+function WorkoutCardSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
+        <div className="flex items-center gap-2">
+          <div className="skeleton w-8 h-8 rounded-xl shrink-0" />
+          <div className="space-y-1.5">
+            <div className="skeleton h-3.5 w-32" />
+            <div className="skeleton h-3 w-40" />
+          </div>
+        </div>
+        <div className="skeleton w-6 h-6 rounded-full" />
+      </div>
+      <div className="px-4 py-3 space-y-2">
+        <div className="skeleton h-3 w-full" />
+        <div className="skeleton h-3 w-3/4" />
+      </div>
+    </div>
+  );
+}
 
 const WORKOUT_TYPES: { value: WorkoutType; label: string; emoji: string; color: string }[] = [
   { value: 'weights',  label: 'Weights',   emoji: '🏋️', color: 'bg-blue-50 border-blue-300 text-blue-700' },
@@ -111,9 +132,9 @@ export default function WorkoutLog() {
   const totalMinutes = workouts.reduce((s, w) => s + w.duration_min, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="page-enter min-h-screen bg-gray-50 pb-8">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      <div className="bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")} className="text-gray-500 hover:text-gray-800">
@@ -342,9 +363,11 @@ export default function WorkoutLog() {
               <button
                 onClick={handleSubmit}
                 disabled={saving || !duration}
-                className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold disabled:opacity-50 transition-colors"
+                className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold disabled:opacity-60 transition-colors flex items-center justify-center gap-1.5 active:scale-[0.98]"
               >
-                {saving ? 'Saving…' : shareToFeed ? 'Save & Share' : 'Save Workout'}
+                {saving ? (
+                  <><Loader2 size={15} className="animate-spin" /> Saving…</>
+                ) : shareToFeed ? 'Save & Share' : 'Save Workout'}
               </button>
             </div>
           </div>
@@ -352,7 +375,9 @@ export default function WorkoutLog() {
 
         {/* Workout list */}
         {loading ? (
-          <div className="text-center py-8 text-gray-400 text-sm">Loading…</div>
+          <div className="space-y-3">
+            {[1, 2].map((i) => <WorkoutCardSkeleton key={i} />)}
+          </div>
         ) : workouts.length === 0 && !showForm ? (
           <div className="text-center py-12 text-gray-400">
             <div className="text-4xl mb-3">🏋️</div>

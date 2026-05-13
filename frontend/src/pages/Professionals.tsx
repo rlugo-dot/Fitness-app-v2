@@ -13,6 +13,53 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+function ProCardSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="h-1 skeleton rounded-none" />
+      <div className="p-4 space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="skeleton w-12 h-12 rounded-2xl shrink-0" />
+          <div className="flex-1 space-y-2">
+            <div className="skeleton h-3.5 w-36" />
+            <div className="skeleton h-3 w-48" />
+            <div className="skeleton h-3 w-24" />
+          </div>
+          <div className="skeleton h-5 w-16 rounded-full" />
+        </div>
+        <div className="flex gap-1.5">
+          <div className="skeleton h-4 w-20 rounded-full" />
+          <div className="skeleton h-4 w-24 rounded-full" />
+          <div className="skeleton h-4 w-16 rounded-full" />
+        </div>
+        <div className="skeleton h-3 w-full" />
+        <div className="skeleton h-3 w-5/6" />
+      </div>
+      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-t border-gray-100">
+        <div className="skeleton h-5 w-20" />
+        <div className="skeleton h-8 w-20 rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+function BookingRowSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+      <div className="flex items-start gap-3">
+        <div className="skeleton w-9 h-9 rounded-xl shrink-0" />
+        <div className="flex-1 space-y-1.5">
+          <div className="skeleton h-3.5 w-36" />
+          <div className="skeleton h-3 w-48" />
+        </div>
+        <div className="skeleton h-5 w-16 rounded-full" />
+      </div>
+      <div className="skeleton h-10 w-full rounded-xl" />
+      <div className="skeleton h-3 w-32" />
+    </div>
+  );
+}
+
 function Avatar({ emoji, color, size = 'md' }: { emoji: string; color: string; size?: 'sm' | 'md' | 'lg' }) {
   const sz = size === 'lg' ? 'w-16 h-16 text-3xl' : size === 'sm' ? 'w-9 h-9 text-lg' : 'w-12 h-12 text-2xl';
   return (
@@ -167,7 +214,7 @@ function ProCard({ pro, booked, onBook }: { pro: Professional; booked: boolean; 
         <button
           onClick={() => onBook(pro)}
           disabled={!pro.is_available || booked}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
             booked
               ? 'bg-green-100 text-green-700 cursor-default'
               : pro.is_available
@@ -184,7 +231,11 @@ function ProCard({ pro, booked, onBook }: { pro: Professional; booked: boolean; 
 
 // ─── My Bookings Tab ───────────────────────────────────────────────────────────
 function MyBookingsTab({ bookings, loading }: { bookings: BookingOut[]; loading: boolean }) {
-  if (loading) return <div className="text-center py-12 text-gray-400 text-sm">Loading bookings…</div>;
+  if (loading) return (
+    <div className="space-y-3">
+      {[1, 2].map((i) => <BookingRowSkeleton key={i} />)}
+    </div>
+  );
   if (bookings.length === 0) return (
     <div className="text-center py-16 space-y-2">
       <p className="text-3xl">📋</p>
@@ -274,9 +325,9 @@ export default function Professionals() {
   const unavailable = filtered.filter((p) => !p.is_available);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="page-enter min-h-screen bg-gray-50 pb-8">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      <div className="bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3">
           <div className="flex items-center gap-3 mb-3">
             <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} className="text-gray-500 hover:text-gray-800">
@@ -345,7 +396,9 @@ export default function Professionals() {
         {tab === 'bookings' ? (
           <MyBookingsTab bookings={bookings} loading={bookingsLoading} />
         ) : loading ? (
-          <div className="text-center py-12 text-gray-400 text-sm">Loading professionals…</div>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => <ProCardSkeleton key={i} />)}
+          </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-12 text-gray-400 space-y-2">
             <p className="text-3xl">🔍</p>

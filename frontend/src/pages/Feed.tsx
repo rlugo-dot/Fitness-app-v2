@@ -10,7 +10,46 @@ import {
   unlikeWorkout,
 } from '../services/api';
 import type { FeedItem, SocialUser, FollowStats } from '../types';
-import { Search, Heart, Clock, Flame, Dumbbell, UserPlus, UserCheck, ChevronLeft } from 'lucide-react';
+import { Search, Heart, Clock, Flame, Dumbbell, UserPlus, UserCheck, ChevronLeft, Loader2 } from 'lucide-react';
+
+function FeedSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+        <div className="skeleton w-10 h-10 rounded-full shrink-0" />
+        <div className="flex-1 space-y-1.5">
+          <div className="skeleton h-3 w-28" />
+          <div className="skeleton h-2.5 w-16" />
+        </div>
+        <div className="skeleton w-8 h-8 rounded-xl" />
+      </div>
+      <div className="px-4 pb-3 space-y-2">
+        <div className="skeleton h-3.5 w-40" />
+        <div className="skeleton h-3 w-full" />
+        <div className="flex gap-4 mt-2">
+          <div className="skeleton h-3 w-12" />
+          <div className="skeleton h-3 w-14" />
+          <div className="skeleton h-3 w-16" />
+        </div>
+      </div>
+      <div className="border-t border-gray-50 px-4 py-2.5">
+        <div className="skeleton h-3 w-14" />
+      </div>
+    </div>
+  );
+}
+
+function UserRowSkeleton() {
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 px-4 py-3 flex items-center gap-3">
+      <div className="skeleton w-8 h-8 rounded-full shrink-0" />
+      <div className="flex-1 space-y-1.5">
+        <div className="skeleton h-3 w-32" />
+      </div>
+      <div className="skeleton h-7 w-20 rounded-xl" />
+    </div>
+  );
+}
 
 function timeAgo(isoString: string): string {
   const diff = Date.now() - new Date(isoString).getTime();
@@ -142,9 +181,9 @@ export default function Feed() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="page-enter min-h-screen bg-gray-50 pb-8">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      <div className="bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3">
           <div className="flex items-center gap-3 mb-3">
             <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")} className="text-gray-500 hover:text-gray-800">
@@ -187,7 +226,9 @@ export default function Feed() {
         {tab === 'feed' && (
           <>
             {feedLoading ? (
-              <div className="text-center py-12 text-gray-400 text-sm">Loading feed…</div>
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => <FeedSkeleton key={i} />)}
+              </div>
             ) : feed.length === 0 ? (
               <div className="text-center py-16 text-gray-400">
                 <div className="text-5xl mb-3">👥</div>
@@ -242,11 +283,15 @@ export default function Feed() {
                   <div className="flex items-center gap-2 px-4 py-2.5 border-t border-gray-50">
                     <button
                       onClick={() => handleLike(item)}
-                      className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                      className={`flex items-center gap-1.5 text-sm font-medium transition-all active:scale-125 duration-150 ${
                         item.liked_by_me ? 'text-rose-500' : 'text-gray-400 hover:text-rose-400'
                       }`}
                     >
-                      <Heart size={16} fill={item.liked_by_me ? 'currentColor' : 'none'} />
+                      <Heart
+                        size={16}
+                        fill={item.liked_by_me ? 'currentColor' : 'none'}
+                        style={{ transition: 'transform 0.15s cubic-bezier(0.34,1.56,0.64,1), fill 0.1s' }}
+                      />
                       {item.likes_count > 0 && item.likes_count}
                     </button>
                     <span className="text-xs text-gray-400 ml-1">
@@ -275,7 +320,9 @@ export default function Feed() {
             </div>
 
             {searchLoading ? (
-              <div className="text-center py-8 text-gray-400 text-sm">Searching…</div>
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => <UserRowSkeleton key={i} />)}
+              </div>
             ) : searchResults.length > 0 ? (
               <div className="space-y-2">
                 {searchResults.map((user) => (
@@ -285,13 +332,15 @@ export default function Feed() {
                     <button
                       onClick={() => handleFollow(user.id, user.is_following)}
                       disabled={followingInProgress.has(user.id)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all disabled:opacity-50 ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all active:scale-95 disabled:opacity-60 ${
                         user.is_following
                           ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           : 'bg-green-600 text-white hover:bg-green-700'
                       }`}
                     >
-                      {user.is_following ? (
+                      {followingInProgress.has(user.id) ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : user.is_following ? (
                         <><UserCheck size={13} /> Following</>
                       ) : (
                         <><UserPlus size={13} /> Follow</>

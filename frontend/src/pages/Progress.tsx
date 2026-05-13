@@ -115,9 +115,9 @@ export default function Progress() {
   const goalHitDays = data.days.filter((d) => d.calories >= data.calorie_goal * 0.9 && d.calories <= data.calorie_goal * 1.1).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="page-enter min-h-screen bg-gray-50 pb-8">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      <div className="bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3">
           <div className="flex items-center gap-3 mb-3">
             <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")} className="text-gray-500 hover:text-gray-800">

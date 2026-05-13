@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMeals, getDailySummary, getWater, updateWater, deleteMealLog, getWorkoutSummary } from '../services/api';
 import type { FoodLog, DailySummary, WaterLog, WorkoutSummary, MealType, Profile } from '../types';
-import { Plus, Trash2, Droplets, Utensils, LogOut, Dumbbell, ChevronLeft, ChevronRight, Users, Sparkles, TrendingUp } from 'lucide-react';
+import { Plus, Trash2, Droplets, Utensils, LogOut, Dumbbell, ChevronLeft, ChevronRight, Sparkles, TrendingUp } from 'lucide-react';
 
 interface Props {
   profile: Profile;
@@ -148,7 +148,7 @@ function WaterTracker({
           <button
             key={i}
             onClick={() => onUpdate(i < glasses ? i : i + 1)}
-            className={`w-8 h-8 rounded-lg text-sm transition-all ${
+            className={`w-8 h-8 rounded-lg text-sm transition-all active:scale-90 ${
               i < glasses
                 ? 'bg-blue-500 text-white shadow-sm'
                 : 'bg-white text-blue-300 border border-blue-200 hover:border-blue-400'
@@ -238,9 +238,9 @@ export default function Dashboard({ profile, onSignOut }: Props) {
   const isToday = date === today;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="page-enter min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      <div className="bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
@@ -252,14 +252,14 @@ export default function Dashboard({ profile, onSignOut }: Props) {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setDate(addDays(date, -1))}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 active:scale-90 transition-all"
               >
                 <ChevronLeft size={18} />
               </button>
               <button
                 disabled={isToday}
                 onClick={() => setDate(addDays(date, 1))}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 <ChevronRight size={18} />
               </button>
@@ -281,7 +281,30 @@ export default function Dashboard({ profile, onSignOut }: Props) {
 
       <div className="max-w-lg mx-auto px-4 py-5 space-y-4">
         {loading ? (
-          <div className="text-center py-12 text-gray-400">Loading…</div>
+          <div className="space-y-4 animate-pulse">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col items-center gap-4">
+              <div className="skeleton w-40 h-40 rounded-full" />
+              <div className="w-full space-y-3">
+                <div className="skeleton h-4 w-full" />
+                <div className="skeleton h-4 w-5/6" />
+                <div className="skeleton h-4 w-4/6" />
+              </div>
+            </div>
+            <div className="skeleton h-12 w-full rounded-2xl" />
+            <div className="skeleton h-24 w-full rounded-2xl" />
+            {[1, 2].map((i) => (
+              <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-50 flex justify-between">
+                  <div className="skeleton h-4 w-24" />
+                  <div className="skeleton h-4 w-12" />
+                </div>
+                <div className="px-4 py-3 space-y-2">
+                  <div className="skeleton h-3 w-48" />
+                  <div className="skeleton h-3 w-32" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : loadError ? (
           <div className="text-center py-12">
             <p className="text-gray-500 text-sm mb-3">Failed to load data.</p>
@@ -307,7 +330,7 @@ export default function Dashboard({ profile, onSignOut }: Props) {
             {/* What should I eat */}
             <button
               onClick={() => navigate(`/recommendations?date=${date}`)}
-              className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white font-semibold rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all"
+              className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 active:scale-[0.98] text-white font-semibold rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all duration-150"
             >
               <Sparkles size={16} /> What should I eat next?
             </button>
@@ -361,7 +384,7 @@ export default function Dashboard({ profile, onSignOut }: Props) {
                       )}
                       <button
                         onClick={() => navigate(`/food-search?meal=${meal}&date=${date}`)}
-                        className="flex items-center gap-1 text-xs text-green-600 font-medium hover:text-green-700"
+                        className="flex items-center gap-1 text-xs text-green-600 font-medium hover:text-green-700 active:scale-95 transition-transform"
                       >
                         <Plus size={14} /> Add
                       </button>
@@ -384,7 +407,7 @@ export default function Dashboard({ profile, onSignOut }: Props) {
                           </div>
                           <button
                             onClick={() => handleDeleteLog(log.id)}
-                            className="ml-3 text-gray-300 hover:text-red-500 transition-colors"
+                            className="ml-3 p-1 text-gray-300 hover:text-red-500 active:scale-90 transition-all"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -399,53 +422,6 @@ export default function Dashboard({ profile, onSignOut }: Props) {
         )}
       </div>
 
-      {/* Bottom Nav */}
-      <div className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100">
-        <div className="max-w-lg mx-auto flex">
-          <button className="flex-1 py-3 flex flex-col items-center gap-0.5 text-green-600">
-            <Utensils size={20} />
-            <span className="text-[10px] font-medium">Today</span>
-          </button>
-          <button
-            onClick={() => navigate('/progress')}
-            className="flex-1 py-3 flex flex-col items-center gap-0.5 text-gray-400 hover:text-green-600"
-          >
-            <TrendingUp size={20} />
-            <span className="text-[10px] font-medium">Progress</span>
-          </button>
-          <button
-            onClick={() => navigate(`/food-search?date=${date}`)}
-            className="flex-1 py-3 flex flex-col items-center gap-0.5 text-gray-400 hover:text-green-600"
-          >
-            <Plus size={20} />
-            <span className="text-[10px] font-medium">Log Food</span>
-          </button>
-          <button
-            onClick={() => navigate('/workouts')}
-            className="flex-1 py-3 flex flex-col items-center gap-0.5 text-gray-400 hover:text-orange-500"
-          >
-            <Dumbbell size={20} />
-            <span className="text-[10px] font-medium">Workouts</span>
-          </button>
-          <button
-            onClick={() => navigate('/feed')}
-            className="flex-1 py-3 flex flex-col items-center gap-0.5 text-gray-400 hover:text-green-600"
-          >
-            <Users size={20} />
-            <span className="text-[10px] font-medium">Feed</span>
-          </button>
-          <button
-            onClick={() => navigate('/profile')}
-            className="flex-1 py-3 flex flex-col items-center gap-0.5 text-gray-400 hover:text-green-600"
-          >
-            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-            </svg>
-            <span className="text-[10px] font-medium">Profile</span>
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

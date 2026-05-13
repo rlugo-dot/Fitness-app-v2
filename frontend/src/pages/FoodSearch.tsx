@@ -62,6 +62,24 @@ const CONFIDENCE_COLOR: Record<string, string> = {
   low: 'text-red-500',
 };
 
+function FoodRowSkeleton() {
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 p-3.5 flex items-center gap-3">
+      <div className="flex-1 space-y-2">
+        <div className="skeleton h-3.5 w-36" />
+        <div className="skeleton h-3 w-48" />
+        <div className="skeleton h-2.5 w-24" />
+      </div>
+      <div className="flex items-center gap-1.5">
+        <div className="skeleton w-6 h-6 rounded-full" />
+        <div className="skeleton h-3 w-5" />
+        <div className="skeleton w-6 h-6 rounded-full" />
+      </div>
+      <div className="skeleton w-8 h-8 rounded-full" />
+    </div>
+  );
+}
+
 export default function FoodSearch() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -310,9 +328,9 @@ export default function FoodSearch() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="page-enter min-h-screen bg-gray-50 pb-8">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      <div className="bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3">
           <div className="flex items-center gap-3 mb-3">
             <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")} className="text-gray-500 hover:text-gray-800">
@@ -412,7 +430,9 @@ export default function FoodSearch() {
             </button>
 
             {loading ? (
-              <div className="text-center py-8 text-gray-400 text-sm">Searching…</div>
+              <div className="space-y-2">
+                {[1, 2, 3, 4, 5].map((i) => <FoodRowSkeleton key={i} />)}
+              </div>
             ) : foods.length === 0 ? (
               <div className="text-center py-8 text-gray-400 text-sm">No foods found</div>
             ) : (
@@ -441,12 +461,12 @@ export default function FoodSearch() {
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => setQuantities((q) => ({ ...q, [food.id]: Math.max(0.5, (q[food.id] || 1) - 0.5) }))}
-                          className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-sm flex items-center justify-center hover:bg-gray-200"
+                          className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-sm flex items-center justify-center hover:bg-gray-200 active:scale-90 transition-transform"
                         >−</button>
                         <span className="text-sm font-medium w-6 text-center">{qty}</span>
                         <button
                           onClick={() => setQuantities((q) => ({ ...q, [food.id]: (q[food.id] || 1) + 0.5 }))}
-                          className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-sm flex items-center justify-center hover:bg-gray-200"
+                          className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-sm flex items-center justify-center hover:bg-gray-200 active:scale-90 transition-transform"
                         >+</button>
                       </div>
                       {food.is_custom && (
@@ -460,11 +480,17 @@ export default function FoodSearch() {
                       <button
                         onClick={() => !isLogged && handleLog(food)}
                         disabled={logging === food.id || isLogged}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                          isLogged ? 'bg-green-100 text-green-600' : 'bg-green-600 text-white hover:bg-green-700 disabled:opacity-50'
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 ${
+                          isLogged ? 'bg-green-100 text-green-600' : 'bg-green-600 text-white hover:bg-green-700 disabled:opacity-60'
                         }`}
                       >
-                        {isLogged ? <Check size={14} /> : <Plus size={14} />}
+                        {logging === food.id ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : isLogged ? (
+                          <Check size={14} />
+                        ) : (
+                          <Plus size={14} />
+                        )}
                       </button>
                     </div>
                   );
