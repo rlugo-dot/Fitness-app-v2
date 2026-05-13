@@ -62,8 +62,54 @@ export default function Progress() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-400 text-sm">Loading progress…</div>
+      <div className="page-enter min-h-screen bg-gray-50 pb-8">
+        <div className="bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-10">
+          <div className="max-w-lg mx-auto px-4 py-3">
+            <div className="flex items-center gap-3 mb-3">
+              <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} className="text-gray-500 hover:text-gray-800">
+                <ChevronLeft size={22} />
+              </button>
+              <h1 className="text-lg font-bold text-gray-900">Progress</h1>
+            </div>
+            <div className="skeleton h-9 w-full rounded-xl" />
+          </div>
+        </div>
+        <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+              <div className="skeleton w-10 h-10 rounded-xl shrink-0" />
+              <div className="space-y-2">
+                <div className="skeleton h-6 w-10" />
+                <div className="skeleton h-3 w-16" />
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+              <div className="skeleton w-10 h-10 rounded-xl shrink-0" />
+              <div className="space-y-2">
+                <div className="skeleton h-6 w-10" />
+                <div className="skeleton h-3 w-16" />
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white rounded-xl border border-gray-100 p-2.5 text-center shadow-sm space-y-1.5">
+                <div className="skeleton h-4 w-10 mx-auto" />
+                <div className="skeleton h-3 w-12 mx-auto" />
+              </div>
+            ))}
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+            <div className="skeleton h-4 w-24" />
+            <div className="skeleton h-3 w-40" />
+            <div className="skeleton h-40 w-full rounded-xl" />
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+            <div className="skeleton h-4 w-28" />
+            <div className="skeleton h-3 w-48" />
+            <div className="skeleton h-36 w-full rounded-xl" />
+          </div>
+        </div>
       </div>
     );
   }
