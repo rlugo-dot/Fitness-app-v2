@@ -149,6 +149,7 @@ function AppContent() {
                   profile={profile!}
                   onUpdated={setProfile}
                   onSignOut={signOut}
+                  isAdmin={isAdmin}
                 />
               }
             />

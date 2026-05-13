@@ -10,6 +10,7 @@ interface Props {
   onUpdated: (p: Profile) => void;
   onSignOut: () => void;
   isSetup?: boolean;
+  isAdmin?: boolean;
 }
 
 const GOAL_OPTIONS = [
@@ -33,7 +34,7 @@ function bmiLabel(bmiVal: string): { label: string; color: string } {
   return { label: 'Obese', color: 'text-red-600' };
 }
 
-export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = false }: Props) {
+export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = false, isAdmin = false }: Props) {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState(profile.full_name || '');
   const [age, setAge] = useState(profile.age?.toString() || '');
@@ -315,6 +316,15 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
                     </>
                   )}
                 </div>
+              )}
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/admin')}
+                  className="w-full py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                  🛡️ Admin Panel
+                </button>
               )}
               <button
                 type="button"
