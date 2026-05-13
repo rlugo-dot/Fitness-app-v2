@@ -457,7 +457,7 @@ function PhoneInput({ value, onChange }: { value: string; onChange: (v: string) 
         type="tel"
         value={localNumber}
         onChange={e => handleLocalChange(e.target.value)}
-        placeholder={countryCode === 'PH' ? '9171898005' : 'Phone number'}
+        placeholder={countryCode === 'PH' ? '9XXXXXXXXX' : 'Phone number'}
         className={input + ' flex-1'}
       />
 
