@@ -1,3 +1,7 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/health",            "destination": "/health/index.html" },
+    { "source": "/health/:condition", "destination": "/health/:condition.html" },
+    { "source": "/(.*)",              "destination": "/index.html" }
+  ]
 }

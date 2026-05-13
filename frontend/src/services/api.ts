@@ -316,6 +316,11 @@ export const updateMyConditions = (conditions: string[]) =>
 export const getDietRecommendations = () =>
   api.get<DietRecommendation[]>('/health/recommendations').then((r) => r.data);
 
+export interface SymptomMatch { id: string; label: string; reason: string; }
+export interface SymptomCheckResult { matches: SymptomMatch[]; urgent: boolean; summary: string; }
+export const checkSymptoms = (symptoms: string) =>
+  api.post<SymptomCheckResult>('/health/symptom-check', { symptoms }).then((r) => r.data);
+
 // ─── Push Notifications ───────────────────────────────────────────────────────
 export const subscribePush = (sub: { endpoint: string; p256dh: string; auth: string }) =>
   api.post('/notifications/subscribe', sub).then((r) => r.data);

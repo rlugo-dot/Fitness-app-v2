@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /health/
+Allow: /professionals/join
+Disallow: /admin
+
+Sitemap: https://phitness-app.vercel.app/sitemap.xml

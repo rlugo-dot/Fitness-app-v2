@@ -194,9 +194,6 @@ DIET_RECOMMENDATIONS: dict[str, dict] = {
         ],
         "calorie_note": "Hypothyroidism slows metabolism — slight calorie reduction (200–300 kcal) may help with weight.",
     },
-}
-
-
     "fatty_liver": {
         "title": "Fatty Liver (NAFLD) Diet",
         "summary": "Reduce liver fat through weight loss, less sugar, and anti-inflammatory foods.",

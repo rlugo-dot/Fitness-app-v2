@@ -5,9 +5,11 @@ import {
   getMyConditions,
   updateMyConditions,
   getDietRecommendations,
+  checkSymptoms,
 } from '../services/api';
 import type { HealthCondition, DietRecommendation } from '../types';
-import { ChevronLeft, ChevronDown, ChevronUp, Check, UserSearch } from 'lucide-react';
+import type { SymptomCheckResult } from '../services/api';
+import { ChevronLeft, ChevronDown, ChevronUp, Check, UserSearch, Stethoscope, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function HealthProfile() {
@@ -19,6 +21,9 @@ export default function HealthProfile() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [symptoms, setSymptoms] = useState('');
+  const [checking, setChecking] = useState(false);
+  const [symptomResult, setSymptomResult] = useState<SymptomCheckResult | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -49,6 +54,22 @@ export default function HealthProfile() {
     setSelected(prev =>
       prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
     );
+  }
+
+  async function handleSymptomCheck() {
+    if (!symptoms.trim() || symptoms.trim().length < 10) {
+      toast.error('Please describe your symptoms in more detail');
+      return;
+    }
+    setChecking(true);
+    setSymptomResult(null);
+    try {
+      const result = await checkSymptoms(symptoms.trim());
+      setSymptomResult(result);
+    } catch {
+      toast.error('Could not analyse symptoms. Please try again.');
+    }
+    setChecking(false);
   }
 
   async function handleSave() {
@@ -82,6 +103,77 @@ export default function HealthProfile() {
           <div className="text-center py-12 text-gray-400 text-sm">Loading…</div>
         ) : (
           <>
+            {/* Symptom Checker */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Stethoscope size={16} className="text-green-600" />
+                <h2 className="font-semibold text-gray-900">Not sure what you have?</h2>
+              </div>
+              <p className="text-xs text-gray-400 mb-3">
+                Describe your symptoms and we'll suggest conditions to discuss with your doctor.
+              </p>
+              <textarea
+                value={symptoms}
+                onChange={e => setSymptoms(e.target.value)}
+                rows={3}
+                placeholder="e.g. I feel tired all the time, my joints hurt, and I've been gaining weight despite eating less…"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none"
+              />
+              <button
+                onClick={handleSymptomCheck}
+                disabled={checking || !symptoms.trim()}
+                className="mt-2 w-full py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+              >
+                {checking ? <><Loader2 size={14} className="animate-spin" /> Analysing…</> : 'Check My Symptoms'}
+              </button>
+
+              {symptomResult && (
+                <div className="mt-4 space-y-3">
+                  {symptomResult.urgent && (
+                    <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+                      <AlertTriangle size={16} className="text-red-600 shrink-0 mt-0.5" />
+                      <p className="text-sm text-red-700 font-medium">Seek medical attention soon — your symptoms may need urgent evaluation.</p>
+                    </div>
+                  )}
+
+                  {symptomResult.matches.length > 0 ? (
+                    <>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Possible conditions to discuss with a doctor</p>
+                      {symptomResult.matches.map(m => (
+                        <div key={m.id} className="flex items-start gap-3 p-3 bg-green-50 border border-green-100 rounded-xl">
+                          <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center shrink-0">
+                            <span className="text-white text-xs font-bold">{m.label[0]}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900">{m.label}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{m.reason}</p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (!selected.includes(m.id)) toggleCondition(m.id);
+                            }}
+                            className={`shrink-0 text-xs px-2 py-1 rounded-lg font-medium transition-colors ${
+                              selected.includes(m.id)
+                                ? 'bg-green-200 text-green-800'
+                                : 'bg-white border border-green-300 text-green-700 hover:bg-green-100'
+                            }`}
+                          >
+                            {selected.includes(m.id) ? '✓ Added' : '+ Add'}
+                          </button>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-500 text-center py-2">No strong matches found from our conditions list.</p>
+                  )}
+
+                  <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
+                    <p className="text-xs text-amber-800">⚕️ {symptomResult.summary}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Condition selector */}
             <div className="bg-white rounded-2xl border border-gray-100 p-4">
               <h2 className="font-semibold text-gray-900 mb-1">My Health Conditions</h2>

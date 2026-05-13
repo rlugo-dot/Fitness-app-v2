@@ -1,0 +1,199 @@
+// Run with: node scripts/generate-health-pages.js
+const fs = require('fs');
+const path = require('path');
+
+const CONDITIONS = [
+  { id: 'pcos',             label: 'PCOS',                  emoji: '🌸', keywords: 'PCOS diet Philippines, polycystic ovary syndrome diet Pilipinas, PCOS Filipino food' },
+  { id: 'diabetes',         label: 'Diabetes',              emoji: '🩸', keywords: 'diabetes diet Philippines, diabetic Filipino food, blood sugar control diet Pilipinas' },
+  { id: 'hypertension',     label: 'Hypertension',          emoji: '❤️', keywords: 'hypertension diet Philippines, high blood pressure diet Filipino, low sodium Filipino food' },
+  { id: 'ibs',              label: 'IBS',                   emoji: '🫁', keywords: 'IBS diet Philippines, irritable bowel syndrome diet Filipino, low FODMAP Filipino food' },
+  { id: 'high_cholesterol', label: 'High Cholesterol',      emoji: '🧈', keywords: 'high cholesterol diet Philippines, lower cholesterol Filipino food, LDL diet Pilipinas' },
+  { id: 'gout',             label: 'Gout',                  emoji: '🦶', keywords: 'gout diet Philippines, uric acid diet Filipino food, gout diet Pilipinas' },
+  { id: 'hypothyroidism',   label: 'Hypothyroidism',        emoji: '🦋', keywords: 'hypothyroidism diet Philippines, thyroid diet Filipino food, low thyroid diet Pilipinas' },
+  { id: 'fatty_liver',      label: 'Fatty Liver (NAFLD)',   emoji: '🫀', keywords: 'fatty liver diet Philippines, NAFLD diet Filipino food, liver disease diet Pilipinas' },
+  { id: 'gerd',             label: 'Acid Reflux / GERD',    emoji: '🔥', keywords: 'acid reflux diet Philippines, GERD diet Filipino food, heartburn diet Pilipinas' },
+  { id: 'anemia',           label: 'Anemia',                emoji: '🩺', keywords: 'anemia diet Philippines, iron deficiency diet Filipino food, anemia diet Pilipinas' },
+  { id: 'ckd',              label: 'Kidney Disease (CKD)',  emoji: '🫘', keywords: 'kidney disease diet Philippines, CKD diet Filipino food, renal diet Pilipinas' },
+  { id: 'osteoporosis',     label: 'Osteoporosis',          emoji: '🦴', keywords: 'osteoporosis diet Philippines, bone health diet Filipino food, calcium diet Pilipinas' },
+  { id: 'obesity',          label: 'Obesity / Weight Loss', emoji: '⚖️', keywords: 'weight loss diet Philippines, obesity diet Filipino food, pagpapayat diet Pilipinas' },
+  { id: 'arthritis',        label: 'Arthritis',             emoji: '🦵', keywords: 'arthritis diet Philippines, joint pain diet Filipino food, anti-inflammatory diet Pilipinas' },
+  { id: 'celiac',           label: 'Celiac / Gluten-Free',  emoji: '🌾', keywords: 'celiac disease diet Philippines, gluten free Filipino food, gluten intolerance diet Pilipinas' },
+  { id: 'asthma',           label: 'Asthma',                emoji: '💨', keywords: 'asthma diet Philippines, asthma food triggers Filipino, lung health diet Pilipinas' },
+];
+
+const RECS = {
+  pcos:             { title:'PCOS Diet',summary:'Focus on low-GI foods to manage insulin resistance and hormone balance.',eat_more:['Leafy greens (kangkong, pechay, malunggay)','High-fiber foods (oatmeal, brown rice, kamote)','Lean protein (chicken, fish, tofu, eggs)','Healthy fats (avocado, nuts, olive oil)','Anti-inflammatory spices (turmeric, ginger)'],limit:['White rice and refined carbs','Sugary drinks and sweets','Processed/fried foods','Full-fat dairy in large amounts'],tips:['Eat smaller, more frequent meals to stabilise blood sugar','Aim for 25–30g of fibre daily','Stay hydrated — at least 8 glasses of water','Pair carbs with protein or fat to slow glucose absorption'],note:'A modest 5–10% body weight reduction can significantly improve symptoms.' },
+  diabetes:         { title:'Diabetes Diet',summary:'Manage blood sugar through consistent carb intake and low-GI food choices.',eat_more:['Non-starchy vegetables (ampalaya, sitaw, okra)','Whole grains (brown rice, oats, whole wheat pan de sal)','Lean proteins (grilled fish, chicken breast, tofu)','Legumes (monggo, black beans)','Ampalaya (bitter gourd) — known to help lower blood sugar'],limit:['White rice (reduce portion — use ¾ cup cooked)','Sweet drinks (softdrinks, juice, sago\'t gulaman)','Sweetened breads and pastries','High-fat meats (lechon, chicharon)'],tips:['Space meals 4–5 hours apart for stable glucose','Use the plate method: ½ vegetables, ¼ protein, ¼ carbs','Check labels — watch for hidden sugars','Walk 15–20 minutes after meals to aid glucose uptake'],note:'Consistent meal timing matters as much as food choice for blood sugar control.' },
+  hypertension:     { title:'Hypertension Diet',summary:'Follow a low-sodium, potassium-rich eating pattern (DASH diet approach).',eat_more:['Potassium-rich foods (banana, kamote, coconut water)','Magnesium sources (dark leafy greens, nuts, seeds)','Calcium-rich foods (low-fat milk, tokwa, sardines)','Oily fish (bangus, galunggong, tuna) for omega-3','Garlic and onion — natural blood pressure support'],limit:['Salty condiments (patis, toyo, bagoong, vetsin)','Processed meats (tocino, longganisa, hotdog)','Canned goods and instant noodles','Alcohol and caffeine in excess'],tips:['Target sodium below 2,300mg/day (ideally 1,500mg)','Cook with herbs and citrus instead of salt','Avoid adding patis or toyo at the table','DASH diet: rich in fruits, vegetables, low-fat dairy'],note:'Losing 5kg can reduce systolic blood pressure by 5–10 mmHg.' },
+  ibs:              { title:'IBS Diet',summary:'Identify personal trigger foods; generally follow a low-FODMAP approach.',eat_more:['Low-FODMAP fruits (banana, grapes, oranges)','Plain white rice (easier to digest than brown)','Boiled or steamed vegetables (carrots, zucchini, pechay)','Lean grilled protein (chicken, fish)','Ginger tea for bloating relief'],limit:['High-FODMAP foods (garlic, onion, monggo, apple, mango)','Dairy (milk, ice cream) if lactose intolerant','Carbonated drinks','Spicy food and chili','Caffeine and alcohol'],tips:['Keep a food diary to track personal triggers','Eat slowly and chew thoroughly','Eat smaller meals more frequently','Manage stress — IBS is strongly linked to gut-brain axis'],note:'Calorie needs are normal; focus is on managing symptoms, not restriction.' },
+  high_cholesterol: { title:'High Cholesterol Diet',summary:'Reduce saturated fat and increase soluble fibre to lower LDL cholesterol.',eat_more:['Soluble fibre (oatmeal, apples, monggo, okra)','Oily fish (bangus, tuna, salmon) 2–3x per week','Nuts (almonds, walnuts) in small portions','Plant sterols (found in whole grains, nuts, seeds)','Olive oil or canola oil instead of lard/butter'],limit:['Fatty meats and skin-on chicken','Lechon, chicharon, crispy pata','Full-fat coconut milk in large amounts','Egg yolks (limit to 4/week if LDL is very high)','Hydrogenated oils and margarine'],tips:['Remove skin from chicken before cooking','Use cooking methods: grill, steam, bake instead of fry','Add chia seeds or flaxseed to meals for extra fibre','Check labels for trans fat (partially hydrogenated oils)'],note:'Even a 10% reduction in dietary saturated fat can lower LDL by 8–10%.' },
+  gout:             { title:'Gout Diet',summary:'Limit purine-rich foods to reduce uric acid buildup in the joints.',eat_more:['Cherries and cherry juice (shown to reduce gout attacks)','Low-fat dairy (skim milk, low-fat yogurt)','Complex carbs (brown rice, oats, kamote)','Vitamin C rich foods (calamansi, guava, pepper)','Plain water — minimum 8 glasses/day to flush uric acid'],limit:['High-purine proteins (internal organs, sardines, anchovies)','Red meat in large portions','Shellfish (hipon, tahong, talaba)','Alcohol especially beer','Sweetened drinks with fructose (softdrinks, juice)'],tips:['Drink water consistently throughout the day','Avoid fasting — it raises uric acid levels','Lose weight gradually; rapid weight loss worsens gout','Take medications as prescribed during flare-ups'],note:'Maintain a healthy weight — obesity is a major risk factor for gout.' },
+  hypothyroidism:   { title:'Hypothyroidism Diet',summary:'Support thyroid function with iodine and selenium; time meals around medication.',eat_more:['Iodine-rich foods (iodised salt, seafood, seaweed)','Selenium sources (tuna, eggs, brown rice, sunflower seeds)','Zinc foods (beef, chicken, pumpkin seeds)','Anti-inflammatory foods (berries, leafy greens, olive oil)','Lean proteins to support metabolism'],limit:['Raw goitrogenic vegetables in large amounts (broccoli, cabbage, kamote tops) — cook them instead','Soy products in excess near medication time','Gluten if also sensitive (some hypothyroid patients benefit)','Processed and high-sugar foods','Excessive caffeine and alcohol'],tips:['Take thyroid medication on an empty stomach, 30–60 min before eating','Avoid calcium supplements or iron within 4 hours of medication','Cooking goitrogenic vegetables reduces their thyroid impact','Regular light exercise supports metabolism'],note:'Hypothyroidism slows metabolism — slight calorie reduction (200–300 kcal) may help with weight.' },
+  fatty_liver:      { title:'Fatty Liver (NAFLD) Diet',summary:'Reduce liver fat through weight loss, less sugar, and anti-inflammatory foods.',eat_more:['Leafy greens (malunggay, kangkong, spinach)','Oily fish (tuna, bangus, salmon) for omega-3','Coffee — 1–2 cups/day is shown to reduce liver fat','Whole grains (brown rice, oats)','Olive oil instead of lard or vegetable oil'],limit:['Alcohol — even small amounts worsen fatty liver','Sweetened drinks (softdrinks, juice, energy drinks)','Fried and ultra-processed foods','Red meat and processed meats','White bread, pastries, and refined carbs'],tips:['Losing 7–10% of body weight significantly reduces liver fat','Avoid alcohol completely — it accelerates liver damage','Exercise at least 150 minutes per week','Regular check-ups with your doctor are important'],note:'A moderate calorie deficit (500 kcal/day) is safe and effective for fatty liver.' },
+  gerd:             { title:'Acid Reflux / GERD Diet',summary:'Avoid foods that relax the lower esophageal sphincter or increase stomach acid.',eat_more:['Oatmeal and whole grains (absorb stomach acid)','Bananas and melons (low-acid fruits)','Boiled or steamed vegetables (except tomato)','Lean protein (grilled chicken, fish, egg whites)','Ginger tea — helps with nausea and reflux'],limit:['Spicy food (sili, chili, black pepper in excess)','Citrus and tomatoes (highly acidic)','Coffee and carbonated drinks','Fatty and fried foods (delay stomach emptying)','Chocolate, mint, and alcohol'],tips:['Eat smaller, more frequent meals instead of 3 large ones','Don\'t lie down within 2–3 hours after eating','Elevate the head of your bed by 6–8 inches','Maintain healthy weight — excess belly fat worsens GERD'],note:'Calorie needs are normal; focus on meal size, timing, and trigger avoidance.' },
+  anemia:           { title:'Iron-Deficiency Anemia Diet',summary:'Increase iron intake and pair it with vitamin C to boost absorption.',eat_more:['Red meat (lean beef, pork liver) in moderate amounts','Malunggay leaves — rich in iron and vitamin C','Dilis and other small dried fish','Monggo, black beans, and other legumes','Fortified cereals and bread'],limit:['Tea and coffee during or right after iron-rich meals (block absorption)','Calcium-heavy foods alongside iron-rich meals','Excessive dairy at iron meal times','Alcohol (interferes with iron metabolism)'],tips:['Pair iron foods with vitamin C (calamansi, guava, pepper) to double absorption','Cook in a cast iron pan — small amounts of iron leach into food','Space tea and coffee 1 hour away from iron-rich meals','Get a blood test to confirm iron levels before supplementing'],note:'Calorie needs are normal; focus is on iron-rich food pairing and absorption.' },
+  ckd:              { title:'Chronic Kidney Disease (CKD) Diet',summary:'Protect kidney function by limiting phosphorus, potassium, and sodium.',eat_more:['White rice (lower potassium than brown rice)','Egg whites (high quality protein, low phosphorus)','Cauliflower, cabbage, and green beans','Apples, grapes, and berries (lower potassium fruits)','Olive oil as your main fat source'],limit:['High-potassium foods (banana, kamote, avocado, tomato)','High-phosphorus foods (dairy, nuts, dark cola drinks, whole grains)','Salt and salty condiments (patis, toyo, bagoong)','Excess protein (strains the kidneys)','Herbal supplements and teas (can damage kidneys)'],tips:['Fluid intake may need to be restricted — follow your nephrologist\'s advice','Leach high-potassium vegetables: peel, cut small, boil in lots of water, discard water','Work closely with a nephrologist and registered dietitian','CKD diet varies by stage — general advice may not apply to your stage'],note:'Adequate calories are essential to prevent muscle breakdown. Don\'t restrict without guidance.' },
+  osteoporosis:     { title:'Osteoporosis Diet',summary:'Build and maintain bone density with calcium, vitamin D, and weight-bearing activity.',eat_more:['Dairy (milk, yogurt, cheese) — rich in calcium','Dilis (small dried fish eaten whole with bones)','Sardines and canned salmon with bones','Malunggay and pechay (plant-based calcium)','Fortified foods (calcium-fortified tofu, soy milk)'],limit:['Excessive caffeine (more than 3 cups of coffee/day)','Alcohol (interferes with calcium absorption)','Very high salt diet (increases calcium excretion)','Carbonated drinks — phosphoric acid may affect bone density'],tips:['Vitamin D is needed to absorb calcium — get 15–20 min of sunlight daily','Weight-bearing exercise (walking, jogging, dancing) strengthens bones','Spread calcium intake across the day — the body absorbs it better in smaller doses','Aim for 1,000–1,200mg calcium per day from food first, then supplements'],note:'Adequate protein intake also supports bone matrix — don\'t under-eat.' },
+  obesity:          { title:'Weight Management Diet',summary:'Create a sustainable calorie deficit through portion control and whole foods.',eat_more:['High-fiber vegetables (fill the plate — kangkong, pechay, sitaw)','Lean proteins (chicken breast, fish, eggs, tokwa) to stay full longer','Soup-based dishes (sinigang, tinola) — high volume, lower calories','Water before meals — reduces how much you eat','Whole fruits over juice (the fiber is key)'],limit:['Sweetened drinks (softdrinks, juice, milk tea)','Fried foods and ultra-processed snacks','Large rice portions (try ¾ cup instead of 1–2 cups)','Eating quickly or while distracted (leads to overeating)'],tips:['Use a smaller plate — it naturally reduces portions','Eat slowly and chew well — fullness signals take 20 minutes','Track meals even briefly — awareness reduces intake','Aim for 0.5–1kg of weight loss per week (sustainable pace)'],note:'A 500 kcal/day deficit leads to about 0.5kg of fat loss per week.' },
+  arthritis:        { title:'Arthritis Diet',summary:'Reduce inflammation and protect joints through an anti-inflammatory eating pattern.',eat_more:['Oily fish (bangus, tuna, galunggong) — omega-3 reduces joint inflammation','Colorful fruits and vegetables (antioxidants fight inflammation)','Turmeric (luyang dilaw) — curcumin is a natural anti-inflammatory','Ginger — shown to reduce arthritis pain in studies','Olive oil as your primary cooking fat'],limit:['Red meat and processed meats (pro-inflammatory)','Refined sugars and sweetened drinks','Fried foods and trans fats','Alcohol (worsens inflammation)','Excess salt (contributes to joint swelling)'],tips:['Maintain a healthy weight — every 1kg lost removes 4kg of pressure from the knees','Warm water exercise and gentle stretching reduce stiffness','Anti-inflammatory diet works gradually — give it 6–8 weeks','Some people find nightshades (tomato, pepper) worsen symptoms — try an elimination trial'],note:'Weight loss is one of the most effective interventions for knee and hip arthritis.' },
+  celiac:           { title:'Celiac / Gluten-Free Diet',summary:'Strictly avoid gluten (wheat, barley, rye) to prevent intestinal damage.',eat_more:['Rice — completely safe and a staple in Filipino cooking','Kamote, gabi, and other root vegetables','Corn, potatoes, and cassava','Fresh meat, fish, and eggs (naturally gluten-free)','Fruits and vegetables in their natural form'],limit:['Wheat-based bread, pasta, crackers, and cake','Regular soy sauce (toyo) — most contain wheat; use tamari instead','Processed foods (many have hidden gluten as a thickener)','Beer and malt beverages','Oats unless specifically certified gluten-free'],tips:['Always check ingredient labels — gluten hides in unexpected products','Avoid cross-contamination: separate cookware, cutting boards, and toasters','At restaurants, ask about shared fryers and cooking surfaces','Healing of the intestine takes 3–6 months on a strict gluten-free diet'],note:'Calorie needs are normal; the priority is complete elimination of gluten.' },
+  asthma:           { title:'Asthma Diet',summary:'Support lung health with antioxidant-rich foods and avoid known dietary triggers.',eat_more:['Colorful fruits and vegetables (antioxidants protect airways)','Apples and tomatoes — linked to better lung function','Oily fish (omega-3 may reduce airway inflammation)','Vitamin D foods (eggs, bangus, fortified milk)','Ginger tea — natural bronchodilator properties'],limit:['Sulfite-containing foods (dried fruits, wine, packaged shrimp, some juices)','Food additives and preservatives (check labels)','Salty foods (high sodium may worsen symptoms)','Heartburn-triggering foods — GERD can worsen asthma'],tips:['Keep a food diary to identify personal dietary triggers','Maintain a healthy weight — obesity worsens asthma severity','Stay well-hydrated to keep airways moist','Always carry your reliever inhaler — diet supports but does not replace medication'],note:'Calorie needs are normal; focus is on trigger avoidance and anti-inflammatory foods.' },
+};
+
+const CSS = `
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0fdf4;color:#1f2937;line-height:1.6}
+  a{color:#16a34a;text-decoration:none}
+  nav{background:#16a34a;padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+  nav .brand{color:#fff;font-weight:700;font-size:18px}
+  nav .cta-btn{background:#fff;color:#16a34a;padding:7px 16px;border-radius:20px;font-weight:600;font-size:13px}
+  .hero{background:#16a34a;color:#fff;padding:40px 20px 32px;text-align:center}
+  .hero h1{font-size:clamp(22px,5vw,34px);font-weight:800;margin-bottom:8px}
+  .hero p{font-size:15px;opacity:.85;max-width:520px;margin:0 auto}
+  .container{max-width:680px;margin:0 auto;padding:24px 16px 48px}
+  .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+  .card h2{font-size:15px;font-weight:700;color:#16a34a;margin-bottom:6px}
+  .card ul{padding-left:18px;margin-top:6px}
+  .card ul li{font-size:14px;color:#374151;margin-bottom:4px}
+  .note{background:#fef9c3;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;font-size:13px;color:#92400e;margin-top:8px}
+  .section-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+  .eat{color:#16a34a}.limit{color:#dc2626}.tips{color:#2563eb}
+  .cta{background:#16a34a;color:#fff;border-radius:16px;padding:24px 20px;text-align:center;margin-top:24px}
+  .cta h3{font-size:18px;font-weight:700;margin-bottom:6px}
+  .cta p{font-size:13px;opacity:.85;margin-bottom:16px}
+  .cta a{background:#fff;color:#16a34a;padding:10px 28px;border-radius:24px;font-weight:700;font-size:14px;display:inline-block}
+  .breadcrumb{font-size:12px;color:#6b7280;margin-bottom:16px}
+  .breadcrumb a{color:#16a34a}
+  .all-conditions{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:16px}
+  .cond-chip{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:600;color:#15803d;text-align:center}
+  .cond-chip span{display:block;font-size:20px;margin-bottom:4px}
+  footer{text-align:center;font-size:12px;color:#9ca3af;padding:20px;border-top:1px solid #e5e7eb}
+`;
+
+function conditionPage(c, rec) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${rec.title} for Filipinos | Phitness</title>
+<meta name="description" content="${rec.summary} Free Filipino diet guide for ${c.label} from Phitness.">
+<meta name="keywords" content="${c.keywords}">
+<link rel="canonical" href="https://phitness-app.vercel.app/health/${c.id}">
+<meta property="og:title" content="${rec.title} | Phitness">
+<meta property="og:description" content="${rec.summary}">
+<meta property="og:type" content="article">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"${rec.title}","description":"${rec.summary}","publisher":{"@type":"Organization","name":"Phitness","url":"https://phitness-app.vercel.app"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://phitness-app.vercel.app/health/${c.id}"}}
+</script>
+<style>${CSS}</style>
+</head>
+<body>
+<nav>
+  <span class="brand">🌿 Phitness</span>
+  <a href="/" class="cta-btn">Open App</a>
+</nav>
+<div class="hero">
+  <div style="font-size:48px;margin-bottom:10px">${c.emoji}</div>
+  <h1>${rec.title}</h1>
+  <p>${rec.summary}</p>
+</div>
+<div class="container">
+  <p class="breadcrumb"><a href="/health">← All Health Conditions</a></p>
+
+  <div class="card">
+    <p class="section-label eat">✅ Eat More</p>
+    <ul>${rec.eat_more.map(i => `<li>${i}</li>`).join('')}</ul>
+  </div>
+
+  <div class="card">
+    <p class="section-label limit">⚠️ Limit / Avoid</p>
+    <ul>${rec.limit.map(i => `<li>${i}</li>`).join('')}</ul>
+  </div>
+
+  <div class="card">
+    <p class="section-label tips">💡 Practical Tips</p>
+    <ul>${rec.tips.map(i => `<li>${i}</li>`).join('')}</ul>
+    <div class="note">📊 ${rec.note}</div>
+  </div>
+
+  <div class="cta">
+    <h3>Track your ${c.label} diet for free</h3>
+    <p>Log meals, get personalised Filipino food recommendations, and connect with a nutritionist on Phitness.</p>
+    <a href="/">Get Started Free</a>
+  </div>
+</div>
+<footer>© 2026 Phitness · Not a substitute for professional medical advice</footer>
+</body>
+</html>`;
+}
+
+function hubPage() {
+  const conditionCards = CONDITIONS.map(c => {
+    const rec = RECS[c.id];
+    return `<a href="/health/${c.id}" class="cond-chip"><span>${c.emoji}</span>${c.label}</a>`;
+  }).join('');
+
+  const allConditionsList = CONDITIONS.map(c => {
+    const rec = RECS[c.id];
+    return `<div class="card">
+  <h2>${c.emoji} ${rec.title}</h2>
+  <p style="font-size:13px;color:#6b7280;margin-bottom:8px">${rec.summary}</p>
+  <a href="/health/${c.id}" style="font-size:13px;font-weight:600;color:#16a34a">View full diet guide →</a>
+</div>`;
+  }).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Filipino Diet Guide for 16 Health Conditions | Phitness</title>
+<meta name="description" content="Free diet guides for diabetes, hypertension, PCOS, gout, IBS, high cholesterol, kidney disease, and more — all with Filipino food examples.">
+<meta name="keywords" content="Filipino diet health conditions, diabetes diet Philippines, hypertension diet Pilipinas, PCOS diet Filipino, gout diet Philippines, health nutrition Philippines">
+<link rel="canonical" href="https://phitness-app.vercel.app/health">
+<meta property="og:title" content="Filipino Diet Guide for 16 Health Conditions | Phitness">
+<meta property="og:description" content="Free diet guides for 16 health conditions with Filipino food examples.">
+<meta property="og:type" content="website">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"Filipino Diet Guide for Health Conditions","description":"Free Filipino diet guides for 16 health conditions","url":"https://phitness-app.vercel.app/health","publisher":{"@type":"Organization","name":"Phitness","url":"https://phitness-app.vercel.app"}}
+</script>
+<style>${CSS}</style>
+</head>
+<body>
+<nav>
+  <span class="brand">🌿 Phitness</span>
+  <a href="/" class="cta-btn">Open App</a>
+</nav>
+<div class="hero">
+  <h1>Filipino Diet Guide</h1>
+  <p>Free, practical diet recommendations for 16 health conditions — using everyday Filipino foods.</p>
+</div>
+<div class="container">
+  <div class="all-conditions">${conditionCards}</div>
+  <div style="margin-top:28px">${allConditionsList}</div>
+  <div class="cta">
+    <h3>Not sure what condition you have?</h3>
+    <p>Describe your symptoms in the Phitness app and get an AI-powered recommendation.</p>
+    <a href="/">Try Phitness Free</a>
+  </div>
+</div>
+<footer>© 2026 Phitness · Not a substitute for professional medical advice</footer>
+</body>
+</html>`;
+}
+
+// Write files
+const outDir = path.join(__dirname, '../public/health');
+fs.mkdirSync(outDir, { recursive: true });
+
+fs.writeFileSync(path.join(outDir, 'index.html'), hubPage());
+console.log('✓ /health/index.html');
+
+for (const c of CONDITIONS) {
+  const rec = RECS[c.id];
+  fs.writeFileSync(path.join(outDir, `${c.id}.html`), conditionPage(c, rec));
+  console.log(`✓ /health/${c.id}.html`);
+}
+
+console.log(`\nGenerated ${CONDITIONS.length + 1} pages in public/health/`);

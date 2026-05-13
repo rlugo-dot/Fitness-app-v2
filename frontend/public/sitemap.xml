@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://phitness-app.vercel.app/health</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://phitness-app.vercel.app/health/pcos</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://phitness-app.vercel.app/health/diabetes</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://phitness-app.vercel.app/health/hypertension</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://phitness-app.vercel.app/health/ibs</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://phitness-app.vercel.app/health/high_cholesterol</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://phitness-app.vercel.app/health/gout</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://phitness-app.vercel.app/health/hypothyroidism</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://phitness-app.vercel.app/health/fatty_liver</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://phitness-app.vercel.app/health/gerd</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://phitness-app.vercel.app/health/anemia</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://phitness-app.vercel.app/health/ckd</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://phitness-app.vercel.app/health/osteoporosis</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://phitness-app.vercel.app/health/obesity</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://phitness-app.vercel.app/health/arthritis</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://phitness-app.vercel.app/health/celiac</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://phitness-app.vercel.app/health/asthma</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://phitness-app.vercel.app/professionals/join</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+</urlset>
