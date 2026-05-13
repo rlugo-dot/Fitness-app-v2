@@ -79,12 +79,12 @@ function conditionPage(c, rec) {
 <title>${rec.title} for Filipinos | Phitness</title>
 <meta name="description" content="${rec.summary} Free Filipino diet guide for ${c.label} from Phitness.">
 <meta name="keywords" content="${c.keywords}">
-<link rel="canonical" href="https://phitness-app.vercel.app/health/${c.id}">
+<link rel="canonical" href="https://fitness-app-v2-two.vercel.app/health/${c.id}">
 <meta property="og:title" content="${rec.title} | Phitness">
 <meta property="og:description" content="${rec.summary}">
 <meta property="og:type" content="article">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Article","headline":"${rec.title}","description":"${rec.summary}","publisher":{"@type":"Organization","name":"Phitness","url":"https://phitness-app.vercel.app"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://phitness-app.vercel.app/health/${c.id}"}}
+{"@context":"https://schema.org","@type":"Article","headline":"${rec.title}","description":"${rec.summary}","publisher":{"@type":"Organization","name":"Phitness","url":"https://fitness-app-v2-two.vercel.app"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://fitness-app-v2-two.vercel.app/health/${c.id}"}}
 </script>
 <style>${CSS}</style>
 </head>
@@ -151,12 +151,12 @@ function hubPage() {
 <title>Filipino Diet Guide for 16 Health Conditions | Phitness</title>
 <meta name="description" content="Free diet guides for diabetes, hypertension, PCOS, gout, IBS, high cholesterol, kidney disease, and more — all with Filipino food examples.">
 <meta name="keywords" content="Filipino diet health conditions, diabetes diet Philippines, hypertension diet Pilipinas, PCOS diet Filipino, gout diet Philippines, health nutrition Philippines">
-<link rel="canonical" href="https://phitness-app.vercel.app/health">
+<link rel="canonical" href="https://fitness-app-v2-two.vercel.app/health">
 <meta property="og:title" content="Filipino Diet Guide for 16 Health Conditions | Phitness">
 <meta property="og:description" content="Free diet guides for 16 health conditions with Filipino food examples.">
 <meta property="og:type" content="website">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","name":"Filipino Diet Guide for Health Conditions","description":"Free Filipino diet guides for 16 health conditions","url":"https://phitness-app.vercel.app/health","publisher":{"@type":"Organization","name":"Phitness","url":"https://phitness-app.vercel.app"}}
+{"@context":"https://schema.org","@type":"WebPage","name":"Filipino Diet Guide for Health Conditions","description":"Free Filipino diet guides for 16 health conditions","url":"https://fitness-app-v2-two.vercel.app/health","publisher":{"@type":"Organization","name":"Phitness","url":"https://fitness-app-v2-two.vercel.app"}}
 </script>
 <style>${CSS}</style>
 </head>

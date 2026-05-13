@@ -3,4 +3,4 @@ Allow: /health/
 Allow: /professionals/join
 Disallow: /admin
 
-Sitemap: https://phitness-app.vercel.app/sitemap.xml
+Sitemap: https://fitness-app-v2-two.vercel.app/sitemap.xml
