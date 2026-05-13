@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Leaf, ChevronRight, ChevronLeft, Check, Loader2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Leaf, ChevronRight, ChevronLeft, Check, Loader2, ChevronDown } from 'lucide-react';
 import { submitApplication } from '../services/api';
 import type { ApplicationInput } from '../services/api';
 import { toast } from 'sonner';
@@ -25,6 +25,43 @@ const COLORS = [
 ];
 
 const MONTHLY_FEE = 999;
+
+const COUNTRIES = [
+  { code: 'PH', name: 'Philippines',   dial: '63',  flag: '🇵🇭' },
+  { code: 'US', name: 'United States', dial: '1',   flag: '🇺🇸' },
+  { code: 'CA', name: 'Canada',        dial: '1',   flag: '🇨🇦' },
+  { code: 'GB', name: 'United Kingdom',dial: '44',  flag: '🇬🇧' },
+  { code: 'AU', name: 'Australia',     dial: '61',  flag: '🇦🇺' },
+  { code: 'NZ', name: 'New Zealand',   dial: '64',  flag: '🇳🇿' },
+  { code: 'SG', name: 'Singapore',     dial: '65',  flag: '🇸🇬' },
+  { code: 'MY', name: 'Malaysia',      dial: '60',  flag: '🇲🇾' },
+  { code: 'HK', name: 'Hong Kong',     dial: '852', flag: '🇭🇰' },
+  { code: 'JP', name: 'Japan',         dial: '81',  flag: '🇯🇵' },
+  { code: 'KR', name: 'South Korea',   dial: '82',  flag: '🇰🇷' },
+  { code: 'CN', name: 'China',         dial: '86',  flag: '🇨🇳' },
+  { code: 'TW', name: 'Taiwan',        dial: '886', flag: '🇹🇼' },
+  { code: 'IN', name: 'India',         dial: '91',  flag: '🇮🇳' },
+  { code: 'ID', name: 'Indonesia',     dial: '62',  flag: '🇮🇩' },
+  { code: 'TH', name: 'Thailand',      dial: '66',  flag: '🇹🇭' },
+  { code: 'VN', name: 'Vietnam',       dial: '84',  flag: '🇻🇳' },
+  { code: 'AE', name: 'UAE',           dial: '971', flag: '🇦🇪' },
+  { code: 'SA', name: 'Saudi Arabia',  dial: '966', flag: '🇸🇦' },
+  { code: 'KW', name: 'Kuwait',        dial: '965', flag: '🇰🇼' },
+  { code: 'QA', name: 'Qatar',         dial: '974', flag: '🇶🇦' },
+  { code: 'BH', name: 'Bahrain',       dial: '973', flag: '🇧🇭' },
+  { code: 'DE', name: 'Germany',       dial: '49',  flag: '🇩🇪' },
+  { code: 'FR', name: 'France',        dial: '33',  flag: '🇫🇷' },
+  { code: 'IT', name: 'Italy',         dial: '39',  flag: '🇮🇹' },
+  { code: 'ES', name: 'Spain',         dial: '34',  flag: '🇪🇸' },
+  { code: 'NL', name: 'Netherlands',   dial: '31',  flag: '🇳🇱' },
+  { code: 'CH', name: 'Switzerland',   dial: '41',  flag: '🇨🇭' },
+  { code: 'SE', name: 'Sweden',        dial: '46',  flag: '🇸🇪' },
+  { code: 'NO', name: 'Norway',        dial: '47',  flag: '🇳🇴' },
+  { code: 'BR', name: 'Brazil',        dial: '55',  flag: '🇧🇷' },
+  { code: 'MX', name: 'Mexico',        dial: '52',  flag: '🇲🇽' },
+  { code: 'ZA', name: 'South Africa',  dial: '27',  flag: '🇿🇦' },
+  { code: 'NG', name: 'Nigeria',       dial: '234', flag: '🇳🇬' },
+];
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -163,8 +200,7 @@ export default function ProfessionalSignup() {
                   placeholder="maria@example.com" className={input} />
               </Field>
               <Field label="Phone (optional)">
-                <input value={form.phone} onChange={e => set('phone', e.target.value)}
-                  placeholder="+63 9XX XXX XXXX" className={input} />
+                <PhoneInput value={form.phone ?? ''} onChange={v => set('phone', v)} />
               </Field>
               <Field label="Professional Title *">
                 <input value={form.title} onChange={e => set('title', e.target.value)}
@@ -348,6 +384,116 @@ export default function ProfessionalSignup() {
 }
 
 const input = 'w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500';
+
+function formatPhoneDisplay(dial: string, local: string): string {
+  if (dial === '63' && local.length === 10) {
+    return `+63 ${local.slice(0, 3)} ${local.slice(3, 6)} ${local.slice(6)}`;
+  }
+  return local ? `+${dial} ${local}` : '';
+}
+
+function PhoneInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [countryCode, setCountryCode] = useState('PH');
+  const [localNumber, setLocalNumber] = useState(value ? value.replace(/^\+\d+\s?/, '') : '');
+  const [showDrop, setShowDrop] = useState(false);
+  const [search, setSearch] = useState('');
+  const dropRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showDrop) return;
+    function onClickOutside(e: MouseEvent) {
+      if (dropRef.current && !dropRef.current.contains(e.target as Node)) {
+        setShowDrop(false);
+        setSearch('');
+      }
+    }
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [showDrop]);
+
+  const country = COUNTRIES.find(c => c.code === countryCode) ?? COUNTRIES[0];
+  const filtered = COUNTRIES.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.dial.includes(search.replace('+', ''))
+  );
+
+  function handleLocalChange(raw: string) {
+    const digits = raw.replace(/\D/g, '');
+
+    // Auto-detect Philippine format: starts with 09, up to 11 digits
+    if (digits.startsWith('09') && digits.length <= 11) {
+      const stripped = digits.slice(1); // remove leading 0
+      setCountryCode('PH');
+      setLocalNumber(stripped);
+      onChange(formatPhoneDisplay('63', stripped));
+      return;
+    }
+
+    setLocalNumber(digits);
+    onChange(formatPhoneDisplay(country.dial, digits));
+  }
+
+  function selectCountry(code: string) {
+    setCountryCode(code);
+    setShowDrop(false);
+    setSearch('');
+    const c = COUNTRIES.find(c => c.code === code)!;
+    onChange(formatPhoneDisplay(c.dial, localNumber));
+  }
+
+  return (
+    <div className="flex gap-2 relative" ref={dropRef}>
+      <button
+        type="button"
+        onClick={() => setShowDrop(v => !v)}
+        className="flex items-center gap-1.5 px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white hover:border-green-400 shrink-0 transition-colors"
+      >
+        <span>{country.flag}</span>
+        <span className="text-gray-700 font-medium">+{country.dial}</span>
+        <ChevronDown size={12} className={`text-gray-400 transition-transform duration-150 ${showDrop ? 'rotate-180' : ''}`} />
+      </button>
+
+      <input
+        type="tel"
+        value={localNumber}
+        onChange={e => handleLocalChange(e.target.value)}
+        placeholder={countryCode === 'PH' ? '9171898005' : 'Phone number'}
+        className={input + ' flex-1'}
+      />
+
+      {showDrop && (
+        <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-xl w-64 max-h-60 overflow-hidden flex flex-col">
+          <div className="p-2 border-b border-gray-100 shrink-0">
+            <input
+              autoFocus
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search country…"
+              className="w-full px-2.5 py-1.5 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div className="overflow-y-auto">
+            {filtered.map(c => (
+              <button
+                key={c.code}
+                type="button"
+                onClick={() => selectCountry(c.code)}
+                className={`flex items-center gap-2.5 px-3 py-2 w-full text-left text-sm transition-colors ${c.code === countryCode ? 'bg-green-50 text-green-700' : 'hover:bg-gray-50'}`}
+              >
+                <span>{c.flag}</span>
+                <span className="flex-1">{c.name}</span>
+                <span className="text-gray-400 text-xs">+{c.dial}</span>
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <p className="text-xs text-gray-400 text-center py-4">No countries found</p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function Field({ label, children, colSpan }: { label: string; children: React.ReactNode; colSpan?: boolean }) {
   return (
