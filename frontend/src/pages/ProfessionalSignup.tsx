@@ -63,6 +63,153 @@ const COUNTRIES = [
   { code: 'NG', name: 'Nigeria',       dial: '234', flag: '🇳🇬' },
 ];
 
+const PROFESSIONAL_TITLES = [
+  {
+    category: 'Medical Doctors',
+    titles: [
+      'General Practitioner (MD)',
+      'Family Medicine Physician (MD)',
+      'Internist / Internal Medicine Physician (MD)',
+      'Cardiologist (MD)',
+      'Dermatologist (MD)',
+      'Endocrinologist (MD)',
+      'Gastroenterologist (MD)',
+      'Geriatrician (MD)',
+      'Hematologist (MD)',
+      'Hepatologist (MD)',
+      'Infectious Disease Specialist (MD)',
+      'Nephrologist (MD)',
+      'Neurologist (MD)',
+      'Obstetrician-Gynecologist / OB-GYN (MD)',
+      'Oncologist (MD)',
+      'Ophthalmologist (MD)',
+      'Orthopedic Surgeon (MD)',
+      'Otolaryngologist / ENT Specialist (MD)',
+      'Pediatrician (MD)',
+      'Physiatrist / Rehabilitation Medicine Physician (MD)',
+      'Psychiatrist (MD)',
+      'Pulmonologist (MD)',
+      'Radiologist (MD)',
+      'Rheumatologist (MD)',
+      'Sports Medicine Physician (MD)',
+      'Urologist (MD)',
+      'General Surgeon (MD)',
+      'Neurosurgeon (MD)',
+      'Plastic & Reconstructive Surgeon (MD)',
+      'Vascular Surgeon (MD)',
+      'Occupational Medicine Physician (MD)',
+    ],
+  },
+  {
+    category: 'Dentists',
+    titles: [
+      'General Dentist (DMD)',
+      'Orthodontist (DMD)',
+      'Oral & Maxillofacial Surgeon (DMD)',
+      'Periodontist (DMD)',
+      'Endodontist (DMD)',
+      'Pediatric Dentist / Pedodontist (DMD)',
+      'Prosthodontist (DMD)',
+      'Oral Medicine Specialist (DMD)',
+    ],
+  },
+  {
+    category: 'Nutrition & Dietetics',
+    titles: [
+      'Registered Nutritionist-Dietitian (RND)',
+      'Clinical Nutritionist-Dietitian (RND)',
+      'Sports Nutritionist-Dietitian (RND)',
+      'Pediatric Nutritionist-Dietitian (RND)',
+      'Renal Dietitian (RND)',
+      'Oncology Dietitian (RND)',
+      'Community Nutritionist-Dietitian (RND)',
+      'Public Health Nutritionist (RND)',
+      'Maternal & Child Nutrition Specialist (RND)',
+      'Diabetes Nutrition Educator (RND)',
+    ],
+  },
+  {
+    category: 'Physical & Occupational Therapy',
+    titles: [
+      'Registered Physical Therapist (RPT)',
+      'Sports Physical Therapist (RPT)',
+      'Pediatric Physical Therapist (RPT)',
+      'Neurological Physical Therapist (RPT)',
+      'Cardiopulmonary Physical Therapist (RPT)',
+      'Geriatric Physical Therapist (RPT)',
+      'Registered Occupational Therapist (ROT)',
+      'Pediatric Occupational Therapist (ROT)',
+      'Hand Therapy Specialist (ROT)',
+      'Speech-Language Pathologist',
+    ],
+  },
+  {
+    category: 'Nursing',
+    titles: [
+      'Registered Nurse (RN)',
+      'Clinical Nurse Specialist (RN)',
+      'Nurse Practitioner (RN)',
+      'Certified Nurse Midwife (RN)',
+      'Public Health Nurse (RN)',
+      'Psychiatric-Mental Health Nurse (RN)',
+      'Critical Care Nurse (RN)',
+      'Oncology Nurse (RN)',
+      'Pediatric Nurse (RN)',
+    ],
+  },
+  {
+    category: 'Psychology & Mental Health',
+    titles: [
+      'Registered Psychologist (RPsy)',
+      'Clinical Psychologist (RPsy)',
+      'Child & Adolescent Psychologist (RPsy)',
+      'Neuropsychologist (RPsy)',
+      'Health Psychologist (RPsy)',
+      'Registered Guidance Counselor (RGC)',
+      'Licensed Mental Health Counselor',
+      'Marriage & Family Therapist',
+    ],
+  },
+  {
+    category: 'Pharmacy',
+    titles: [
+      'Registered Pharmacist (RPh)',
+      'Clinical Pharmacist (RPh)',
+      'Hospital Pharmacist (RPh)',
+      'Community Pharmacist (RPh)',
+    ],
+  },
+  {
+    category: 'Allied Health',
+    titles: [
+      'Medical Technologist (RMT)',
+      'Radiologic Technologist (RRT)',
+      'Respiratory Therapist',
+      'Optometrist (OD)',
+      'Registered Midwife (RM)',
+      'Medical Laboratory Scientist (RMT)',
+      'Diagnostic Medical Sonographer',
+      'Traditional & Complementary Medicine Practitioner',
+      'Acupuncturist',
+    ],
+  },
+  {
+    category: 'Fitness & Wellness',
+    titles: [
+      'Certified Personal Trainer (CPT)',
+      'Strength & Conditioning Specialist (CSCS)',
+      'Certified Sports Nutritionist',
+      'Group Fitness Instructor',
+      'Yoga Instructor (RYT)',
+      'Pilates Instructor',
+      'CrossFit Coach',
+      'Certified Health Coach',
+      'Wellness Coach',
+      'Functional Movement Specialist',
+    ],
+  },
+];
+
 type Step = 1 | 2 | 3 | 4;
 
 const STEPS = ['Your Info', 'Expertise', 'About You', 'Review'];
@@ -203,8 +350,7 @@ export default function ProfessionalSignup() {
                 <PhoneInput value={form.phone ?? ''} onChange={v => set('phone', v)} />
               </Field>
               <Field label="Professional Title *">
-                <input value={form.title} onChange={e => set('title', e.target.value)}
-                  placeholder="e.g. Registered Nutritionist-Dietitian" className={input} />
+                <TitlePicker value={form.title} onChange={v => set('title', v)} />
               </Field>
               <Field label="City / Location *">
                 <input value={form.location} onChange={e => set('location', e.target.value)}
@@ -384,6 +530,114 @@ export default function ProfessionalSignup() {
 }
 
 const input = 'w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500';
+
+function TitlePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch('');
+      }
+    }
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [open]);
+
+  const allTitles = PROFESSIONAL_TITLES.flatMap(cat =>
+    cat.titles.map(t => ({ title: t, category: cat.category }))
+  );
+
+  const filtered = search.trim()
+    ? allTitles.filter(item =>
+        item.title.toLowerCase().includes(search.toLowerCase()) ||
+        item.category.toLowerCase().includes(search.toLowerCase())
+      )
+    : null;
+
+  function select(title: string) {
+    onChange(title);
+    setOpen(false);
+    setSearch('');
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="relative">
+        <input
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          onFocus={() => setOpen(true)}
+          placeholder="Search or type your title…"
+          className={input + ' pr-9'}
+        />
+        <button
+          type="button"
+          onClick={() => setOpen(v => !v)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-600 transition-colors"
+        >
+          <ChevronDown size={16} className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+
+      {open && (
+        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-xl max-h-72 overflow-hidden flex flex-col">
+          <div className="p-2 border-b border-gray-100 shrink-0">
+            <input
+              autoFocus
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search titles…"
+              className="w-full px-2.5 py-1.5 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div className="overflow-y-auto">
+            {filtered ? (
+              filtered.length > 0 ? (
+                filtered.map(item => (
+                  <button
+                    key={item.title}
+                    type="button"
+                    onClick={() => select(item.title)}
+                    className={`flex flex-col items-start w-full text-left px-3 py-2.5 transition-colors hover:bg-gray-50 ${value === item.title ? 'bg-green-50' : ''}`}
+                  >
+                    <span className={`text-sm font-medium leading-snug ${value === item.title ? 'text-green-700' : 'text-gray-800'}`}>{item.title}</span>
+                    <span className="text-[10px] text-gray-400 mt-0.5">{item.category}</span>
+                  </button>
+                ))
+              ) : (
+                <p className="text-xs text-gray-400 text-center py-5">No titles found — your typed title will be used</p>
+              )
+            ) : (
+              PROFESSIONAL_TITLES.map(cat => (
+                <div key={cat.category}>
+                  <p className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50 border-y border-gray-100 sticky top-0">
+                    {cat.category}
+                  </p>
+                  {cat.titles.map(title => (
+                    <button
+                      key={title}
+                      type="button"
+                      onClick={() => select(title)}
+                      className={`flex items-center gap-2 w-full text-left px-3 py-2 text-sm transition-colors hover:bg-gray-50 ${value === title ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700'}`}
+                    >
+                      {value === title && <Check size={11} className="shrink-0 text-green-600" />}
+                      <span className={value === title ? '' : 'pl-[19px]'}>{title}</span>
+                    </button>
+                  ))}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function formatPhoneDisplay(dial: string, local: string): string {
   if (dial === '63' && local.length === 10) {
