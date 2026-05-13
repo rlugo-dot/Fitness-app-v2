@@ -210,6 +210,256 @@ const PROFESSIONAL_TITLES = [
   },
 ];
 
+const PH_LOCATIONS = [
+  {
+    region: 'Metro Manila (NCR)',
+    cities: [
+      'Caloocan, Metro Manila',
+      'Las Piñas, Metro Manila',
+      'Makati, Metro Manila',
+      'Malabon, Metro Manila',
+      'Mandaluyong, Metro Manila',
+      'Manila, Metro Manila',
+      'Marikina, Metro Manila',
+      'Muntinlupa, Metro Manila',
+      'Navotas, Metro Manila',
+      'Parañaque, Metro Manila',
+      'Pasay, Metro Manila',
+      'Pasig, Metro Manila',
+      'Pateros, Metro Manila',
+      'Quezon City, Metro Manila',
+      'San Juan, Metro Manila',
+      'Taguig, Metro Manila',
+      'Valenzuela, Metro Manila',
+    ],
+  },
+  {
+    region: 'CAR (Cordillera)',
+    cities: [
+      'Baguio City, Benguet',
+      'La Trinidad, Benguet',
+      'Tabuk City, Kalinga',
+      'Bangued, Abra',
+      'Bontoc, Mountain Province',
+      'Lagawe, Ifugao',
+      'Kabugao, Apayao',
+    ],
+  },
+  {
+    region: 'Region I – Ilocos',
+    cities: [
+      'Laoag City, Ilocos Norte',
+      'Batac City, Ilocos Norte',
+      'Vigan City, Ilocos Sur',
+      'Candon City, Ilocos Sur',
+      'San Fernando City, La Union',
+      'Dagupan City, Pangasinan',
+      'San Carlos City, Pangasinan',
+      'Urdaneta City, Pangasinan',
+      'Alaminos City, Pangasinan',
+      'Lingayen, Pangasinan',
+    ],
+  },
+  {
+    region: 'Region II – Cagayan Valley',
+    cities: [
+      'Tuguegarao City, Cagayan',
+      'Ilagan City, Isabela',
+      'Santiago City, Isabela',
+      'Cauayan City, Isabela',
+      'Bayombong, Nueva Vizcaya',
+      'Solano, Nueva Vizcaya',
+    ],
+  },
+  {
+    region: 'Region III – Central Luzon',
+    cities: [
+      'Angeles City, Pampanga',
+      'San Fernando City, Pampanga',
+      'Mabalacat City, Pampanga',
+      'Olongapo City, Zambales',
+      'Balanga City, Bataan',
+      'Malolos City, Bulacan',
+      'Meycauayan City, Bulacan',
+      'San Jose del Monte City, Bulacan',
+      'Cabanatuan City, Nueva Ecija',
+      'Palayan City, Nueva Ecija',
+      'Gapan City, Nueva Ecija',
+      'Muñoz City, Nueva Ecija',
+      'Science City of Muñoz, Nueva Ecija',
+      'Tarlac City, Tarlac',
+    ],
+  },
+  {
+    region: 'Region IV-A – CALABARZON',
+    cities: [
+      'Antipolo City, Rizal',
+      'Cainta, Rizal',
+      'Taytay, Rizal',
+      'Bacoor City, Cavite',
+      'Dasmariñas City, Cavite',
+      'General Trias City, Cavite',
+      'Imus City, Cavite',
+      'Tagaytay City, Cavite',
+      'Trece Martires City, Cavite',
+      'Calamba City, Laguna',
+      'San Pablo City, Laguna',
+      'Santa Rosa City, Laguna',
+      'Biñan City, Laguna',
+      'Cabuyao City, Laguna',
+      'San Pedro City, Laguna',
+      'Batangas City, Batangas',
+      'Lipa City, Batangas',
+      'Tanauan City, Batangas',
+      'Lucena City, Quezon',
+      'Tayabas City, Quezon',
+    ],
+  },
+  {
+    region: 'Region IV-B – MIMAROPA',
+    cities: [
+      'Puerto Princesa City, Palawan',
+      'Calapan City, Oriental Mindoro',
+      'San Jose, Occidental Mindoro',
+      'Romblon, Romblon',
+      'Boac, Marinduque',
+    ],
+  },
+  {
+    region: 'Region V – Bicol',
+    cities: [
+      'Legazpi City, Albay',
+      'Ligao City, Albay',
+      'Tabaco City, Albay',
+      'Naga City, Camarines Sur',
+      'Iriga City, Camarines Sur',
+      'Masbate City, Masbate',
+      'Sorsogon City, Sorsogon',
+    ],
+  },
+  {
+    region: 'Region VI – Western Visayas',
+    cities: [
+      'Iloilo City, Iloilo',
+      'Passi City, Iloilo',
+      'Bacolod City, Negros Occidental',
+      'Bago City, Negros Occidental',
+      'Cadiz City, Negros Occidental',
+      'Kabankalan City, Negros Occidental',
+      'La Carlota City, Negros Occidental',
+      'Sagay City, Negros Occidental',
+      'San Carlos City, Negros Occidental',
+      'Silay City, Negros Occidental',
+      'Talisay City, Negros Occidental',
+      'Victorias City, Negros Occidental',
+      'Roxas City, Capiz',
+      'Kalibo, Aklan',
+      'San Jose, Antique',
+      'Jordan, Guimaras',
+    ],
+  },
+  {
+    region: 'Region VII – Central Visayas',
+    cities: [
+      'Cebu City, Cebu',
+      'Lapu-Lapu City, Cebu',
+      'Mandaue City, Cebu',
+      'Carcar City, Cebu',
+      'Danao City, Cebu',
+      'Naga City, Cebu',
+      'Talisay City, Cebu',
+      'Toledo City, Cebu',
+      'Tagbilaran City, Bohol',
+      'Dumaguete City, Negros Oriental',
+      'Bais City, Negros Oriental',
+      'Bayawan City, Negros Oriental',
+      'Canlaon City, Negros Oriental',
+      'Guihulngan City, Negros Oriental',
+      'Tanjay City, Negros Oriental',
+      'Siquijor, Siquijor',
+    ],
+  },
+  {
+    region: 'Region VIII – Eastern Visayas',
+    cities: [
+      'Tacloban City, Leyte',
+      'Ormoc City, Leyte',
+      'Baybay City, Leyte',
+      'Maasin City, Southern Leyte',
+      'Calbayog City, Samar',
+      'Catbalogan City, Samar',
+      'Borongan City, Eastern Samar',
+      'Naval, Biliran',
+    ],
+  },
+  {
+    region: 'Region IX – Zamboanga Peninsula',
+    cities: [
+      'Zamboanga City, Zamboanga del Sur',
+      'Dapitan City, Zamboanga del Norte',
+      'Dipolog City, Zamboanga del Norte',
+      'Pagadian City, Zamboanga del Sur',
+      'Isabela City, Basilan',
+    ],
+  },
+  {
+    region: 'Region X – Northern Mindanao',
+    cities: [
+      'Cagayan de Oro City, Misamis Oriental',
+      'El Salvador City, Misamis Oriental',
+      'Gingoog City, Misamis Oriental',
+      'Iligan City, Lanao del Norte',
+      'Oroquieta City, Misamis Occidental',
+      'Ozamis City, Misamis Occidental',
+      'Tangub City, Misamis Occidental',
+      'Malaybalay City, Bukidnon',
+      'Valencia City, Bukidnon',
+    ],
+  },
+  {
+    region: 'Region XI – Davao',
+    cities: [
+      'Davao City, Davao del Sur',
+      'Digos City, Davao del Sur',
+      'Mati City, Davao Oriental',
+      'Panabo City, Davao del Norte',
+      'Tagum City, Davao del Norte',
+      'Island Garden City of Samal, Davao del Norte',
+    ],
+  },
+  {
+    region: 'Region XII – SOCCSKSARGEN',
+    cities: [
+      'General Santos City, South Cotabato',
+      'Koronadal City, South Cotabato',
+      'Kidapawan City, North Cotabato',
+      'Tacurong City, Sultan Kudarat',
+    ],
+  },
+  {
+    region: 'Region XIII – Caraga',
+    cities: [
+      'Butuan City, Agusan del Norte',
+      'Bayugan City, Agusan del Sur',
+      'Bislig City, Surigao del Sur',
+      'Surigao City, Surigao del Norte',
+      'Tandag City, Surigao del Sur',
+      'Cabadbaran City, Agusan del Norte',
+    ],
+  },
+  {
+    region: 'BARMM – Bangsamoro',
+    cities: [
+      'Cotabato City, Maguindanao',
+      'Marawi City, Lanao del Sur',
+      'Lamitan City, Basilan',
+      'Jolo, Sulu',
+      'Bongao, Tawi-Tawi',
+      'Sultan Kudarat, Maguindanao',
+    ],
+  },
+];
+
 type Step = 1 | 2 | 3 | 4;
 
 const STEPS = ['Your Info', 'Expertise', 'About You', 'Review'];
@@ -353,8 +603,7 @@ export default function ProfessionalSignup() {
                 <TitlePicker value={form.title} onChange={v => set('title', v)} />
               </Field>
               <Field label="City / Location *">
-                <input value={form.location} onChange={e => set('location', e.target.value)}
-                  placeholder="e.g. Makati, Metro Manila" className={input} />
+                <LocationPicker value={form.location} onChange={v => set('location', v)} />
               </Field>
             </div>
           )}
@@ -627,6 +876,116 @@ function TitlePicker({ value, onChange }: { value: string; onChange: (v: string)
                     >
                       {value === title && <Check size={11} className="shrink-0 text-green-600" />}
                       <span className={value === title ? '' : 'pl-[19px]'}>{title}</span>
+                    </button>
+                  ))}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LocationPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch('');
+      }
+    }
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [open]);
+
+  const allLocations = PH_LOCATIONS.flatMap(r =>
+    r.cities.map(c => ({ city: c, region: r.region }))
+  );
+
+  const filtered = search.trim()
+    ? allLocations.filter(item =>
+        item.city.toLowerCase().includes(search.toLowerCase()) ||
+        item.region.toLowerCase().includes(search.toLowerCase())
+      )
+    : null;
+
+  function select(city: string) {
+    onChange(city);
+    setOpen(false);
+    setSearch('');
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="relative">
+        <input
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          onFocus={() => setOpen(true)}
+          placeholder="Search city or province…"
+          className={input + ' pr-9'}
+        />
+        <button
+          type="button"
+          onClick={() => setOpen(v => !v)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-600 transition-colors"
+        >
+          <ChevronDown size={16} className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+
+      {open && (
+        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-xl max-h-72 overflow-hidden flex flex-col">
+          <div className="p-2 border-b border-gray-100 shrink-0">
+            <input
+              autoFocus
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search city, province, or region…"
+              className="w-full px-2.5 py-1.5 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div className="overflow-y-auto">
+            {filtered ? (
+              filtered.length > 0 ? (
+                filtered.map(item => (
+                  <button
+                    key={item.city}
+                    type="button"
+                    onClick={() => select(item.city)}
+                    className={`flex flex-col items-start w-full text-left px-3 py-2.5 transition-colors hover:bg-gray-50 ${value === item.city ? 'bg-green-50' : ''}`}
+                  >
+                    <span className={`text-sm font-medium leading-snug ${value === item.city ? 'text-green-700' : 'text-gray-800'}`}>
+                      {item.city.split(',')[0]}
+                    </span>
+                    <span className="text-[10px] text-gray-400 mt-0.5">{item.city.split(',').slice(1).join(',').trim()} · {item.region}</span>
+                  </button>
+                ))
+              ) : (
+                <p className="text-xs text-gray-400 text-center py-5">No locations found — your typed location will be used</p>
+              )
+            ) : (
+              PH_LOCATIONS.map(r => (
+                <div key={r.region}>
+                  <p className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50 border-y border-gray-100 sticky top-0">
+                    {r.region}
+                  </p>
+                  {r.cities.map(city => (
+                    <button
+                      key={city}
+                      type="button"
+                      onClick={() => select(city)}
+                      className={`flex items-center gap-2 w-full text-left px-3 py-2 text-sm transition-colors hover:bg-gray-50 ${value === city ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700'}`}
+                    >
+                      {value === city && <Check size={11} className="shrink-0 text-green-600" />}
+                      <span className={value === city ? '' : 'pl-[19px]'}>{city}</span>
                     </button>
                   ))}
                 </div>
