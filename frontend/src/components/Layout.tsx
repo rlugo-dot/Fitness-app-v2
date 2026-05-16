@@ -1,13 +1,13 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Utensils, TrendingUp, Plus, Dumbbell, Users } from 'lucide-react';
+import { Utensils, TrendingUp, Plus, Dumbbell, MessageSquare } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 const NAV = [
-  { icon: Utensils,   label: 'Today',    to: '/',          exact: true },
-  { icon: TrendingUp, label: 'Progress', to: '/progress',  exact: false },
-  { icon: Plus,       label: 'Log',      to: '/food-search', exact: false, center: true },
-  { icon: Dumbbell,   label: 'Workouts', to: '/workouts',  exact: false },
-  { icon: Users,      label: 'Feed',     to: '/feed',      exact: false },
+  { icon: Utensils,      label: 'Today',    to: '/',          exact: true },
+  { icon: TrendingUp,    label: 'Progress', to: '/progress',  exact: false },
+  { icon: Plus,          label: 'Log',      to: '/food-search', exact: false, center: true },
+  { icon: Dumbbell,      label: 'Workouts', to: '/workouts',  exact: false },
+  { icon: MessageSquare, label: 'Messages', to: '/messages',  exact: false },
 ];
 
 function ProfileIcon() {

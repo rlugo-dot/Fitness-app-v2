@@ -6,11 +6,12 @@ import {
   bookProfessional,
   getMyBookings,
   getSubscription,
+  startConversation,
 } from '../services/api';
 import type { Professional, BookingOut, SubscriptionStatus } from '../services/api';
 import {
   ChevronLeft, Search, MapPin, Star, Calendar, X,
-  Check, Loader2, BadgeCheck, Clock, CheckCircle2, XCircle, Lock, Sparkles,
+  Check, Loader2, BadgeCheck, Clock, CheckCircle2, XCircle, Lock, Sparkles, MessageSquare,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -237,7 +238,7 @@ function ProCard({ pro, booked, isSubscribed, onBook }: { pro: Professional; boo
 }
 
 // ─── My Bookings Tab ───────────────────────────────────────────────────────────
-function MyBookingsTab({ bookings, loading }: { bookings: BookingOut[]; loading: boolean }) {
+function MyBookingsTab({ bookings, loading, onMessage }: { bookings: BookingOut[]; loading: boolean; onMessage: (professionalId: string) => void }) {
   if (loading) return (
     <div className="space-y-3">
       {[1, 2].map((i) => <BookingRowSkeleton key={i} />)}
@@ -286,6 +287,12 @@ function MyBookingsTab({ bookings, loading }: { bookings: BookingOut[]; loading:
                 </span>
               )}
             </div>
+            <button
+              onClick={() => onMessage(b.professional_id)}
+              className="w-full flex items-center justify-center gap-1.5 py-2 bg-green-50 hover:bg-green-100 text-green-700 text-xs font-semibold rounded-xl transition-colors active:scale-95"
+            >
+              <MessageSquare size={13} /> Message {pro?.name?.split(',')[0] ?? 'Professional'}
+            </button>
           </div>
         );
       })}
@@ -403,7 +410,16 @@ export default function Professionals() {
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-3">
         {tab === 'bookings' ? (
-          <MyBookingsTab bookings={bookings} loading={bookingsLoading} />
+          <MyBookingsTab
+            bookings={bookings}
+            loading={bookingsLoading}
+            onMessage={async (professionalId) => {
+              try {
+                const conv = await startConversation(professionalId);
+                navigate(`/messages/${conv.id}`);
+              } catch { toast.error('Could not open conversation'); }
+            }}
+          />
         ) : loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => <ProCardSkeleton key={i} />)}

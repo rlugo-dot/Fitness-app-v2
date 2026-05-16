@@ -400,3 +400,36 @@ export const getSubscription = (): Promise<SubscriptionStatus> =>
 
 export const createCheckout = (): Promise<{ checkout_url: string }> =>
   api.post('/payments/checkout').then((r) => r.data);
+
+// ─── Messages ─────────────────────────────────────────────────────────────────
+export interface MessageOut {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  sender_type: 'user' | 'system';
+  content: string;
+  created_at: string;
+  read_at: string | null;
+}
+
+export interface ConversationOut {
+  id: string;
+  user_id: string;
+  professional_id: string;
+  created_at: string;
+  last_message_at: string;
+  professional: { name: string; title: string; avatar_emoji: string; avatar_color: string } | null;
+  last_message: { content: string; created_at: string; sender_type: string } | null;
+}
+
+export const startConversation = (professional_id: string) =>
+  api.post<ConversationOut>('/messages/conversations', { professional_id }).then((r) => r.data);
+
+export const getConversations = () =>
+  api.get<ConversationOut[]>('/messages/conversations').then((r) => r.data);
+
+export const getConversationMessages = (conv_id: string) =>
+  api.get<{ conversation: ConversationOut; messages: MessageOut[] }>(`/messages/conversations/${conv_id}`).then((r) => r.data);
+
+export const sendMessage = (conv_id: string, content: string) =>
+  api.post<MessageOut>(`/messages/conversations/${conv_id}/send`, { content }).then((r) => r.data);

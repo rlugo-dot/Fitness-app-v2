@@ -21,6 +21,8 @@ import ProfessionalSignup from './pages/ProfessionalSignup';
 import AdminPanel from './pages/AdminPanel';
 import Subscribe from './pages/Subscribe';
 import SubscriptionSuccess from './pages/SubscriptionSuccess';
+import Messages from './pages/Messages';
+import Conversation from './pages/Conversation';
 
 const ADMIN_EMAIL = 'richardlyonneuygo@gmail.com';
 
@@ -144,6 +146,8 @@ function AppContent() {
             <Route path="/professionals" element={<Professionals />} />
             <Route path="/subscribe" element={<Subscribe />} />
             <Route path="/subscription/success" element={<SubscriptionSuccess />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/messages/:convId" element={<Conversation />} />
             <Route path="/health" element={<HealthProfile />} />
             {isAdmin && <Route path="/admin" element={<AdminPanel />} />}
             <Route
