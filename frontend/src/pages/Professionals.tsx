@@ -5,11 +5,12 @@ import {
   getProfessionalSpecialties,
   bookProfessional,
   getMyBookings,
+  getSubscription,
 } from '../services/api';
-import type { Professional, BookingOut } from '../services/api';
+import type { Professional, BookingOut, SubscriptionStatus } from '../services/api';
 import {
   ChevronLeft, Search, MapPin, Star, Calendar, X,
-  Check, Loader2, BadgeCheck, Clock, CheckCircle2, XCircle,
+  Check, Loader2, BadgeCheck, Clock, CheckCircle2, XCircle, Lock, Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -147,7 +148,7 @@ function BookingModal({ pro, onClose, onSuccess }: { pro: Professional; onClose:
 }
 
 // ─── Professional Card ─────────────────────────────────────────────────────────
-function ProCard({ pro, booked, onBook }: { pro: Professional; booked: boolean; onBook: (p: Professional) => void }) {
+function ProCard({ pro, booked, isSubscribed, onBook }: { pro: Professional; booked: boolean; isSubscribed: boolean; onBook: (p: Professional) => void }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -213,16 +214,22 @@ function ProCard({ pro, booked, onBook }: { pro: Professional; booked: boolean; 
         </div>
         <button
           onClick={() => onBook(pro)}
-          disabled={!pro.is_available || booked}
+          disabled={booked || (!isSubscribed ? false : !pro.is_available)}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
             booked
               ? 'bg-green-100 text-green-700 cursor-default'
+              : !isSubscribed
+              ? 'bg-amber-500 hover:bg-amber-600 text-white'
               : pro.is_available
               ? 'bg-green-600 hover:bg-green-700 text-white'
               : 'bg-gray-200 text-gray-400 cursor-not-allowed'
           }`}
         >
-          {booked ? <><Check size={13} /> Requested</> : <><Calendar size={13} /> Book</>}
+          {booked
+            ? <><Check size={13} /> Requested</>
+            : !isSubscribed
+            ? <><Lock size={13} /> Subscribe</>
+            : <><Calendar size={13} /> Book</>}
         </button>
       </div>
     </div>
@@ -299,6 +306,7 @@ export default function Professionals() {
   const [activeSpecialty, setActiveSpecialty] = useState('');
   const [bookingPro, setBookingPro] = useState<Professional | null>(null);
   const [bookedIds, setBookedIds] = useState<Set<string>>(new Set());
+  const [subStatus, setSubStatus] = useState<SubscriptionStatus | null>(null);
 
   useEffect(() => {
     Promise.all([getProfessionals(), getProfessionalSpecialties()]).then(([pros, specs]) => {
@@ -311,6 +319,7 @@ export default function Professionals() {
       setBookedIds(new Set(bs.map((b) => b.professional_id)));
       setBookingsLoading(false);
     }).catch(() => setBookingsLoading(false));
+    getSubscription().then(setSubStatus).catch(() => {});
   }, []);
 
   const filtered = professionals.filter((p) => {
@@ -410,10 +419,30 @@ export default function Professionals() {
           </div>
         ) : (
           <>
+            {/* Subscription banner */}
+            {subStatus && !subStatus.is_active && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3.5 flex items-center gap-3">
+                <div className="w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
+                  <Sparkles size={18} className="text-amber-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-amber-900">Subscribe to book professionals</p>
+                  <p className="text-xs text-amber-700 mt-0.5">₱299/month · unlimited bookings</p>
+                </div>
+                <button
+                  onClick={() => navigate('/subscribe')}
+                  className="shrink-0 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl transition-colors active:scale-95"
+                >
+                  Get Pro
+                </button>
+              </div>
+            )}
             <p className="text-xs text-gray-400">{available.length} available · {unavailable.length} unavailable</p>
             {available.map((pro) => (
               <ProCard key={pro.id} pro={pro} booked={bookedIds.has(pro.id)}
+                isSubscribed={subStatus?.is_active ?? false}
                 onBook={(p) => {
+                  if (!subStatus?.is_active) { navigate('/subscribe'); return; }
                   if (bookedIds.has(p.id)) { toast.info('You already sent a request.'); return; }
                   setBookingPro(p);
                 }}
@@ -423,7 +452,10 @@ export default function Professionals() {
               <p className="text-xs text-gray-400 pt-2">Currently unavailable</p>
             )}
             {unavailable.map((pro) => (
-              <ProCard key={pro.id} pro={pro} booked={bookedIds.has(pro.id)} onBook={() => {}} />
+              <ProCard key={pro.id} pro={pro} booked={bookedIds.has(pro.id)}
+                isSubscribed={subStatus?.is_active ?? false}
+                onBook={() => { if (!subStatus?.is_active) navigate('/subscribe'); }}
+              />
             ))}
 
             {/* Join CTA */}

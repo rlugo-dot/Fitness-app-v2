@@ -19,6 +19,8 @@ import Professionals from './pages/Professionals';
 import HealthProfile from './pages/HealthProfile';
 import ProfessionalSignup from './pages/ProfessionalSignup';
 import AdminPanel from './pages/AdminPanel';
+import Subscribe from './pages/Subscribe';
+import SubscriptionSuccess from './pages/SubscriptionSuccess';
 
 const ADMIN_EMAIL = 'richardlyonneuygo@gmail.com';
 
@@ -140,6 +142,8 @@ function AppContent() {
             <Route path="/gyms" element={<GymMap />} />
             <Route path="/progress" element={<Progress />} />
             <Route path="/professionals" element={<Professionals />} />
+            <Route path="/subscribe" element={<Subscribe />} />
+            <Route path="/subscription/success" element={<SubscriptionSuccess />} />
             <Route path="/health" element={<HealthProfile />} />
             {isAdmin && <Route path="/admin" element={<AdminPanel />} />}
             <Route

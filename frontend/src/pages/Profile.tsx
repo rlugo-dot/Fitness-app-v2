@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { updateProfile, sendTestNotification } from '../services/api';
+import { updateProfile, sendTestNotification, getSubscription } from '../services/api';
+import type { SubscriptionStatus } from '../services/api';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import type { Profile } from '../types';
-import { ChevronLeft, Save, Bell, BellOff } from 'lucide-react';
+import { ChevronLeft, Save, Bell, BellOff, Sparkles } from 'lucide-react';
 
 interface Props {
   profile: Profile;
@@ -44,7 +45,12 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
   const [calorieGoal, setCalorieGoal] = useState(profile.daily_calorie_goal?.toString() || '2000');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [sub, setSub] = useState<SubscriptionStatus | null>(null);
   const { isSupported, isIOS, isStandalone, isSubscribed, loading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
+
+  useEffect(() => {
+    if (!isSetup) getSubscription().then(setSub).catch(() => {});
+  }, [isSetup]);
 
   // Auto-calculate calorie goal based on goal type
   function suggestCalories() {
@@ -235,6 +241,38 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
 
           {!isSetup && (
             <>
+              {/* Subscription status */}
+              {sub && (
+                <div className={`bg-white rounded-2xl border p-4 ${sub.is_active ? 'border-green-100' : 'border-gray-100'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={15} className={sub.is_active ? 'text-green-500' : 'text-gray-400'} />
+                      <span className="text-sm font-semibold text-gray-900">Phitness Pro</span>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      sub.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      {sub.is_active ? 'ACTIVE' : sub.status === 'expired' ? 'EXPIRED' : 'INACTIVE'}
+                    </span>
+                  </div>
+                  {sub.is_active && sub.expires_at ? (
+                    <p className="text-xs text-gray-400">
+                      Valid until{' '}
+                      <span className="font-medium text-gray-600">
+                        {new Date(sub.expires_at).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => navigate('/subscribe')}
+                      className="w-full mt-2 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm rounded-xl transition-colors active:scale-[0.98]"
+                    >
+                      Get Phitness Pro — ₱299/mo
+                    </button>
+                  )}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={() => navigate('/health')}

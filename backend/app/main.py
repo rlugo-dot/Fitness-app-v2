@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from app.routers import profile, foods, meals, water, workouts, health, food_scan, integrations, weight, social, recommendations, analytics, professionals, notifications, applications, admin
+from app.routers import profile, foods, meals, water, workouts, health, food_scan, integrations, weight, social, recommendations, analytics, professionals, notifications, applications, admin, payments
 from app.limiter import limiter
 
 app = FastAPI(title="Phitness API", version="1.0.0")
@@ -36,6 +36,7 @@ app.include_router(professionals.router,    prefix="/api/professionals",    tags
 app.include_router(notifications.router,   prefix="/api/notifications",   tags=["notifications"])
 app.include_router(applications.router,    prefix="/api/applications",    tags=["applications"])
 app.include_router(admin.router,           prefix="/api/admin",           tags=["admin"])
+app.include_router(payments.router,        prefix="/api/payments",        tags=["payments"])
 
 
 @app.get("/api/health")

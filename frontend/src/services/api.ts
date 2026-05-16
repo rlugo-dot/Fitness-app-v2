@@ -386,3 +386,17 @@ export const rejectApplication = (id: string, notes?: string) =>
 
 export const activateApplication = (id: string) =>
   api.patch(`/applications/${id}/activate`).then((r) => r.data);
+
+// ── Payments / Subscription ──────────────────────────────────────────────────
+
+export type SubscriptionStatus = {
+  status: 'inactive' | 'pending' | 'active' | 'expired';
+  expires_at: string | null;
+  is_active: boolean;
+};
+
+export const getSubscription = (): Promise<SubscriptionStatus> =>
+  api.get('/payments/subscription').then((r) => r.data);
+
+export const createCheckout = (): Promise<{ checkout_url: string }> =>
+  api.post('/payments/checkout').then((r) => r.data);
