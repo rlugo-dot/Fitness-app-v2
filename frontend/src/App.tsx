@@ -69,21 +69,35 @@ function SplashScreen() {
   );
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+  ]);
+}
+
 function AppContent() {
   const { session, loading: authLoading, sendOtp, verifyOtp, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState(false);
+  const [slowLoad, setSlowLoad] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
     if (!session) { setProfile(null); setProfileLoading(false); return; }
     setProfileLoading(true);
     setProfileError(false);
-    getProfile()
+    setSlowLoad(false);
+
+    const slowTimer = setTimeout(() => setSlowLoad(true), 4000);
+
+    withTimeout(getProfile(), 15000)
       .then(setProfile)
       .catch(() => setProfileError(true))
-      .finally(() => setProfileLoading(false));
+      .finally(() => { setProfileLoading(false); clearTimeout(slowTimer); });
+
+    return () => clearTimeout(slowTimer);
   }, [session]);
 
   // Public route — no auth required (after all hooks)
@@ -92,7 +106,29 @@ function AppContent() {
   }
 
   if (authLoading || (session && (profileLoading || (!profile && !profileError)))) {
-    return <SplashScreen />;
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center select-none">
+        <div className="splash-logo relative mb-7">
+          <div className="absolute -inset-5 rounded-[44px] bg-green-500" style={{ animation: 'ringPulse 2.4s ease-in-out infinite' }} />
+          <div className="absolute -inset-2 rounded-[36px] bg-green-100/60" />
+          <div className="relative w-24 h-24 bg-green-600 rounded-[28px] flex items-center justify-center shadow-[0_16px_48px_rgba(22,163,74,0.38)]">
+            <span className="text-white font-bold leading-none" style={{ fontSize: 56, fontFamily: "'Sora', system-ui, sans-serif" }}>P</span>
+          </div>
+        </div>
+        <div className="splash-text text-center">
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Phitness</h1>
+          <p className="text-sm text-gray-400 mt-1">Filipino Health &amp; Nutrition</p>
+        </div>
+        <div className="flex items-center gap-2 mt-12">
+          {[0, 160, 320].map((delay, i) => (
+            <span key={i} className="dot-bounce block w-2 h-2 rounded-full bg-green-400" style={{ animationDelay: `${delay}ms` }} />
+          ))}
+        </div>
+        {slowLoad && (
+          <p className="mt-6 text-xs text-gray-400 animate-pulse">Server is starting up, please wait…</p>
+        )}
+      </div>
+    );
   }
 
   if (!session) {
@@ -102,9 +138,17 @@ function AppContent() {
   if (profileError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="text-center">
-          <p className="text-gray-700 mb-4">Failed to load profile. Please try again.</p>
-          <button onClick={signOut} className="px-4 py-2 bg-gray-100 rounded-lg text-sm active:scale-95 transition-transform">
+        <div className="text-center space-y-3 max-w-xs">
+          <p className="text-2xl">⚡</p>
+          <p className="text-gray-800 font-semibold">Server is waking up</p>
+          <p className="text-sm text-gray-400">This happens after a period of inactivity. Usually takes under a minute.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl text-sm transition-colors active:scale-95"
+          >
+            Retry
+          </button>
+          <button onClick={signOut} className="w-full py-2 text-sm text-gray-400 hover:text-gray-600">
             Sign Out
           </button>
         </div>
