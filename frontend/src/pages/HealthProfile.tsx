@@ -94,7 +94,7 @@ export default function HealthProfile() {
           <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")} className="text-gray-500 hover:text-gray-800">
             <ChevronLeft size={22} />
           </button>
-          <h1 className="text-lg font-bold text-gray-900">Health Profile</h1>
+          <h1 className="text-lg font-bold text-gray-900">Health & Risk Factors</h1>
         </div>
       </div>
 
@@ -107,10 +107,10 @@ export default function HealthProfile() {
             <div className="bg-white rounded-2xl border border-gray-100 p-4">
               <div className="flex items-center gap-2 mb-1">
                 <Stethoscope size={16} className="text-green-600" />
-                <h2 className="font-semibold text-gray-900">Not sure what you have?</h2>
+                <h2 className="font-semibold text-gray-900">Not sure what applies to you?</h2>
               </div>
               <p className="text-xs text-gray-400 mb-3">
-                Describe your symptoms and we'll suggest conditions to discuss with your doctor.
+                Describe how you feel and we'll suggest relevant risk factors to discuss with your doctor.
               </p>
               <textarea
                 value={symptoms}
@@ -138,7 +138,7 @@ export default function HealthProfile() {
 
                   {symptomResult.matches.length > 0 ? (
                     <>
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Possible conditions to discuss with a doctor</p>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Possible risk factors to discuss with a doctor</p>
                       {symptomResult.matches.map(m => (
                         <div key={m.id} className="flex items-start gap-3 p-3 bg-green-50 border border-green-100 rounded-xl">
                           <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center shrink-0">
@@ -176,9 +176,9 @@ export default function HealthProfile() {
 
             {/* Condition selector */}
             <div className="bg-white rounded-2xl border border-gray-100 p-4">
-              <h2 className="font-semibold text-gray-900 mb-1">My Health Conditions</h2>
+              <h2 className="font-semibold text-gray-900 mb-1">My Comorbidities & Risk Factors</h2>
               <p className="text-xs text-gray-400 mb-4">
-                Select any conditions that apply. We'll tailor your diet recommendations.
+                Select any that apply to you. We'll tailor your nutrition and fitness recommendations accordingly.
               </p>
 
               <div className="grid grid-cols-2 gap-2">

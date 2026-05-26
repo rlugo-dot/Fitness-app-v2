@@ -278,7 +278,7 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
                 onClick={() => navigate('/health')}
                 className="w-full py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
               >
-                <span>🩺</span> Health Conditions & Diet
+                <span>🩺</span> Comorbidities & Risk Factors
               </button>
               <button
                 type="button"

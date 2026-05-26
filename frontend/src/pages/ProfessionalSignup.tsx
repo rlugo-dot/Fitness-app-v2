@@ -5,10 +5,11 @@ import type { ApplicationInput } from '../services/api';
 import { toast } from 'sonner';
 
 const SPECIALTIES = [
-  'Nutrition', 'Weight Management', 'Sports Nutrition', 'Diabetes Management',
-  'Heart Health', 'Pediatric Nutrition', 'Eating Disorders', 'Personal Training',
-  'Yoga & Wellness', 'Physical Therapy', 'Mental Wellness', 'General Fitness',
-  'Strength & Conditioning', 'Prenatal Nutrition', 'Elderly Care',
+  'Nutrition & Dietetics', 'Sports Nutrition', 'Weight Management', 'Diabetes Management',
+  'Sports Medicine', 'Orthopedics & Rehab', 'Physical Therapy (DPT)', 'Occupational Therapy',
+  'Strength & Conditioning', 'Personal Training', 'Sports Science', 'General Fitness',
+  'Mental Wellness', 'Yoga & Wellness', 'Prenatal Nutrition', 'Pediatric Nutrition',
+  'Elderly Care', 'Eating Disorders', 'Pharmacology & Supplementation',
 ];
 
 const EMOJIS = ['👨‍⚕️','👩‍⚕️','🧑‍⚕️','💪','🏋️','🧘','🥗','🏃','🩺','⚡','🌿','🎯'];
@@ -24,7 +25,7 @@ const COLORS = [
   { label: 'Amber',  value: '#d97706' },
 ];
 
-const MONTHLY_FEE = 999;
+const MONTHLY_FEE = 169;
 
 const COUNTRIES = [
   { code: 'PH', name: 'Philippines',   dial: '63',  flag: '🇵🇭' },
@@ -69,35 +70,15 @@ const PROFESSIONAL_TITLES = [
     titles: [
       'General Practitioner (MD)',
       'Family Medicine Physician (MD)',
-      'Internist / Internal Medicine Physician (MD)',
-      'Cardiologist (MD)',
-      'Dermatologist (MD)',
-      'Endocrinologist (MD)',
-      'Gastroenterologist (MD)',
-      'Geriatrician (MD)',
-      'Hematologist (MD)',
-      'Hepatologist (MD)',
-      'Infectious Disease Specialist (MD)',
-      'Nephrologist (MD)',
-      'Neurologist (MD)',
-      'Obstetrician-Gynecologist / OB-GYN (MD)',
-      'Oncologist (MD)',
-      'Ophthalmologist (MD)',
-      'Orthopedic Surgeon (MD)',
-      'Otolaryngologist / ENT Specialist (MD)',
-      'Pediatrician (MD)',
-      'Physiatrist / Rehabilitation Medicine Physician (MD)',
-      'Psychiatrist (MD)',
-      'Pulmonologist (MD)',
-      'Radiologist (MD)',
-      'Rheumatologist (MD)',
       'Sports Medicine Physician (MD)',
-      'Urologist (MD)',
-      'General Surgeon (MD)',
-      'Neurosurgeon (MD)',
-      'Plastic & Reconstructive Surgeon (MD)',
-      'Vascular Surgeon (MD)',
+      'Orthopedic Surgeon (MD)',
+      'Physiatrist / Rehabilitation Medicine Physician (MD)',
       'Occupational Medicine Physician (MD)',
+      'Endocrinologist (MD)',
+      'Internist / Internal Medicine Physician (MD)',
+      'Geriatrician (MD)',
+      'Pediatrician (MD)',
+      'Obstetrician-Gynecologist / OB-GYN (MD)',
     ],
   },
   {
@@ -131,16 +112,15 @@ const PROFESSIONAL_TITLES = [
   {
     category: 'Physical & Occupational Therapy',
     titles: [
-      'Registered Physical Therapist (RPT)',
-      'Sports Physical Therapist (RPT)',
-      'Pediatric Physical Therapist (RPT)',
-      'Neurological Physical Therapist (RPT)',
-      'Cardiopulmonary Physical Therapist (RPT)',
-      'Geriatric Physical Therapist (RPT)',
+      'Doctor of Physical Therapy (DPT)',
+      'Sports Physical Therapist (DPT)',
+      'Orthopedic Physical Therapist (DPT)',
+      'Pediatric Physical Therapist (DPT)',
+      'Neurological Physical Therapist (DPT)',
+      'Geriatric Physical Therapist (DPT)',
       'Registered Occupational Therapist (ROT)',
       'Pediatric Occupational Therapist (ROT)',
       'Hand Therapy Specialist (ROT)',
-      'Speech-Language Pathologist',
     ],
   },
   {
