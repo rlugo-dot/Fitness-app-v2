@@ -23,6 +23,8 @@ import Subscribe from './pages/Subscribe';
 import SubscriptionSuccess from './pages/SubscriptionSuccess';
 import Messages from './pages/Messages';
 import Conversation from './pages/Conversation';
+import ProPortal from './pages/ProPortal';
+import ProClientView from './pages/ProClientView';
 
 const ADMIN_EMAIL = 'richardlyonneuygo@gmail.com';
 
@@ -192,6 +194,8 @@ function AppContent() {
             <Route path="/subscription/success" element={<SubscriptionSuccess />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/messages/:convId" element={<Conversation />} />
+            <Route path="/pro" element={<ProPortal />} />
+            <Route path="/pro/client/:userId" element={<ProClientView />} />
             <Route path="/health" element={<HealthProfile />} />
             {isAdmin && <Route path="/admin" element={<AdminPanel />} />}
             <Route

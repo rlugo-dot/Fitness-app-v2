@@ -148,6 +148,7 @@ def activate_professional(
 
     supabase.table("professionals").insert({
         "name": app["name"],
+        "email": app["email"],
         "title": app["title"],
         "specialties": app["specialties"],
         "bio": app["bio"],

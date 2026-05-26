@@ -1,7 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { updateProfile, sendTestNotification, getSubscription } from '../services/api';
-import type { SubscriptionStatus } from '../services/api';
+import { updateProfile, sendTestNotification, getSubscription, getProMe } from '../services/api';
+import type { SubscriptionStatus, ProProfile } from '../services/api';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import type { Profile } from '../types';
 import { ChevronLeft, Save, Bell, BellOff, Sparkles } from 'lucide-react';
@@ -46,10 +46,14 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [sub, setSub] = useState<SubscriptionStatus | null>(null);
+  const [proProfile, setProProfile] = useState<ProProfile | null>(null);
   const { isSupported, isIOS, isStandalone, isSubscribed, loading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
 
   useEffect(() => {
-    if (!isSetup) getSubscription().then(setSub).catch(() => {});
+    if (!isSetup) {
+      getSubscription().then(setSub).catch(() => {});
+      getProMe().then(p => setProProfile(p || null)).catch(() => {});
+    }
   }, [isSetup]);
 
   // Auto-calculate calorie goal based on goal type
@@ -273,6 +277,15 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
                   </button>
                 )}
               </div>
+              {proProfile && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/pro')}
+                  className="w-full py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>🩺</span> Pro Portal — {proProfile.name}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => navigate('/health')}

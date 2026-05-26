@@ -433,3 +433,80 @@ export const getConversationMessages = (conv_id: string) =>
 
 export const sendMessage = (conv_id: string, content: string) =>
   api.post<MessageOut>(`/messages/conversations/${conv_id}/send`, { content }).then((r) => r.data);
+
+// ─── Professional Portal ───────────────────────────────────────────────────────
+
+export interface ProProfile {
+  id: string;
+  name: string;
+  title: string;
+  email: string | null;
+  specialties: string[];
+  bio: string;
+  rate_php: number;
+  location: string;
+  years_exp: number;
+  avatar_emoji: string;
+  avatar_color: string;
+  is_available: boolean;
+}
+
+export interface ProBooking {
+  id: string;
+  user_id: string;
+  professional_id: string;
+  message: string;
+  preferred_date: string | null;
+  status: string;
+  created_at: string;
+  client: { full_name: string } | null;
+}
+
+export interface ClientData {
+  profile: {
+    full_name: string;
+    weight_kg: number | null;
+    height_cm: number | null;
+    age: number | null;
+    goal: string | null;
+    daily_calorie_goal: number | null;
+  } | null;
+  food_logs: Array<{
+    id: string;
+    log_date: string;
+    meal_type: string;
+    quantity_g: number;
+    foods: { name: string; calories: number; protein_g: number; carbs_g: number; fat_g: number } | null;
+  }>;
+  workout_logs: Array<{
+    id: string;
+    log_date: string;
+    activity: string;
+    duration_min: number;
+    calories_burned: number | null;
+    notes: string | null;
+  }>;
+  weight_logs: Array<{
+    id: string;
+    weight_kg: number;
+    logged_at: string;
+  }>;
+}
+
+export const getProMe = (): Promise<ProProfile | null> =>
+  api.get('/pro/me').then((r) => r.data);
+
+export const getProBookings = (): Promise<ProBooking[]> =>
+  api.get('/pro/bookings').then((r) => r.data);
+
+export const updateBookingStatus = (id: string, status: 'confirmed' | 'cancelled') =>
+  api.patch(`/pro/bookings/${id}`, { status }).then((r) => r.data);
+
+export const toggleProAvailability = (): Promise<{ is_available: boolean }> =>
+  api.patch('/pro/availability').then((r) => r.data);
+
+export const updateProProfile = (data: { bio?: string; rate_php?: number; location?: string; specialties?: string[] }) =>
+  api.patch<ProProfile>('/pro/profile', data).then((r) => r.data);
+
+export const getClientData = (userId: string): Promise<ClientData> =>
+  api.get(`/pro/clients/${userId}`).then((r) => r.data);
