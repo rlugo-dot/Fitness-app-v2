@@ -247,7 +247,7 @@ function AppCard({ app, onRefresh }: { app: ProfessionalApplication; onRefresh: 
           <div className="bg-gray-50 rounded-xl px-3 py-2 space-y-1">
             <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Location & Rate</p>
             <p className="text-xs text-gray-700 flex items-center gap-1"><MapPin size={10} />{app.location}</p>
-            <p className="text-xs text-gray-500 flex items-center gap-1"><Star size={10} />{app.years_exp}y exp · ₱{app.rate_php.toLocaleString()}/hr</p>
+            <p className="text-xs text-gray-500 flex items-center gap-1"><Star size={10} />{app.years_exp}y exp · ₱{app.rate_php.toLocaleString()}/session</p>
           </div>
         </div>
 

@@ -511,7 +511,7 @@ export default function ProfessionalSignup() {
             {[
               'We review your application',
               'You receive an approval email',
-              'You pay the ₱999/month listing fee',
+              `You pay the ₱${MONTHLY_FEE}/month listing fee`,
               'Your profile goes live on Phitness',
             ].map((step, i) => (
               <div key={i} className="flex items-start gap-3">
@@ -597,7 +597,7 @@ export default function ProfessionalSignup() {
                     onChange={e => set('years_exp', parseInt(e.target.value) || 0)}
                     placeholder="5" className={input} />
                 </Field>
-                <Field label="Session Rate (₱/hr) *">
+                <Field label="Session Rate (₱/session) *">
                   <input type="number" min={0} value={form.rate_php || ''}
                     onChange={e => set('rate_php', parseInt(e.target.value) || 0)}
                     placeholder="500" className={input} />
@@ -703,7 +703,7 @@ export default function ProfessionalSignup() {
                 <Row label="Title" value={form.title} />
                 <Row label="Location" value={form.location} />
                 <Row label="Experience" value={`${form.years_exp} year${form.years_exp !== 1 ? 's' : ''}`} />
-                <Row label="Rate" value={`₱${form.rate_php.toLocaleString()}/hr`} />
+                <Row label="Rate" value={`₱${form.rate_php.toLocaleString()}/session`} />
                 <div className="flex gap-2 pt-1">
                   <span className="text-xs text-gray-500 w-20 shrink-0 pt-0.5">Specialties</span>
                   <div className="flex flex-wrap gap-1">
