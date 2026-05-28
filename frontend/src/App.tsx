@@ -25,6 +25,10 @@ import Messages from './pages/Messages';
 import Conversation from './pages/Conversation';
 import ProPortal from './pages/ProPortal';
 import ProClientView from './pages/ProClientView';
+import ProClients from './pages/ProClients';
+import ProProfileEdit from './pages/ProProfileEdit';
+import ProCalendar from './pages/ProCalendar';
+import ProLayout from './components/ProLayout';
 
 const ADMIN_EMAIL = 'richardlyonneuygo@gmail.com';
 
@@ -161,57 +165,75 @@ function AppContent() {
   const needsSetup = profile && !profile.full_name;
   const isAdmin = session?.user?.email === ADMIN_EMAIL;
 
+  // Setup flow — force profile completion before anything else
+  if (needsSetup) {
+    return (
+      <Layout showNav={false}>
+        <Routes>
+          <Route
+            path="/profile"
+            element={
+              <ProfilePage
+                profile={profile!}
+                onUpdated={setProfile}
+                onSignOut={signOut}
+                isSetup={true}
+              />
+            }
+          />
+          <Route path="*" element={<Navigate to="/profile" replace />} />
+        </Routes>
+      </Layout>
+    );
+  }
+
+  // Pro portal routes — completely separate layout
+  if (location.pathname.startsWith('/pro')) {
+    return (
+      <ProLayout>
+        <Routes>
+          <Route path="/pro" element={<ProPortal />} />
+          <Route path="/pro/calendar" element={<ProCalendar />} />
+          <Route path="/pro/client/:userId" element={<ProClientView />} />
+          <Route path="/pro/clients" element={<ProClients />} />
+          <Route path="/pro/profile" element={<ProProfileEdit />} />
+          <Route path="*" element={<Navigate to="/pro" replace />} />
+        </Routes>
+      </ProLayout>
+    );
+  }
+
+  // Regular user app
   return (
-    <Layout showNav={!needsSetup}>
+    <Layout showNav>
       <Routes>
-        {needsSetup ? (
-          <>
-            <Route
-              path="/profile"
-              element={
-                <ProfilePage
-                  profile={profile!}
-                  onUpdated={setProfile}
-                  onSignOut={signOut}
-                  isSetup={true}
-                />
-              }
+        <Route path="/" element={<Dashboard profile={profile!} onSignOut={signOut} />} />
+        <Route path="/food-search" element={<FoodSearch />} />
+        <Route path="/workouts" element={<WorkoutLog />} />
+        <Route path="/integrations" element={<Integrations />} />
+        <Route path="/feed" element={<Feed />} />
+        <Route path="/recommendations" element={<Recommendations />} />
+        <Route path="/gyms" element={<GymMap />} />
+        <Route path="/progress" element={<Progress />} />
+        <Route path="/professionals" element={<Professionals />} />
+        <Route path="/subscribe" element={<Subscribe />} />
+        <Route path="/subscription/success" element={<SubscriptionSuccess />} />
+        <Route path="/messages" element={<Messages />} />
+        <Route path="/messages/:convId" element={<Conversation />} />
+        <Route path="/health" element={<HealthProfile />} />
+        {isAdmin && <Route path="/admin" element={<AdminPanel />} />}
+        <Route
+          path="/profile"
+          element={
+            <ProfilePage
+              profile={profile!}
+              onUpdated={setProfile}
+              onSignOut={signOut}
+              isAdmin={isAdmin}
             />
-            <Route path="*" element={<Navigate to="/profile" replace />} />
-          </>
-        ) : (
-          <>
-            <Route path="/" element={<Dashboard profile={profile!} onSignOut={signOut} />} />
-            <Route path="/food-search" element={<FoodSearch />} />
-            <Route path="/workouts" element={<WorkoutLog />} />
-            <Route path="/integrations" element={<Integrations />} />
-            <Route path="/feed" element={<Feed />} />
-            <Route path="/recommendations" element={<Recommendations />} />
-            <Route path="/gyms" element={<GymMap />} />
-            <Route path="/progress" element={<Progress />} />
-            <Route path="/professionals" element={<Professionals />} />
-            <Route path="/subscribe" element={<Subscribe />} />
-            <Route path="/subscription/success" element={<SubscriptionSuccess />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/messages/:convId" element={<Conversation />} />
-            <Route path="/pro" element={<ProPortal />} />
-            <Route path="/pro/client/:userId" element={<ProClientView />} />
-            <Route path="/health" element={<HealthProfile />} />
-            {isAdmin && <Route path="/admin" element={<AdminPanel />} />}
-            <Route
-              path="/profile"
-              element={
-                <ProfilePage
-                  profile={profile!}
-                  onUpdated={setProfile}
-                  onSignOut={signOut}
-                  isAdmin={isAdmin}
-                />
-              }
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </>
-        )}
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
   );

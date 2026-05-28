@@ -508,7 +508,7 @@ export const updateBookingStatus = (id: string, status: 'confirmed' | 'cancelled
 export const toggleProAvailability = (): Promise<{ is_available: boolean }> =>
   api.patch('/pro/availability').then((r) => r.data);
 
-export const updateProProfile = (data: { bio?: string; rate_php?: number; location?: string; specialties?: string[] }) =>
+export const updateProProfile = (data: { bio?: string; rate_php?: number; location?: string; specialties?: string[]; session_type?: string }) =>
   api.patch<ProProfile>('/pro/profile', data).then((r) => r.data);
 
 export const getClientData = (userId: string): Promise<ClientData> =>
