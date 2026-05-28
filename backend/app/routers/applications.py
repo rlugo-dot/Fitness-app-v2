@@ -4,6 +4,7 @@ from typing import Any, Optional
 from datetime import datetime, timezone
 from app.dependencies import get_supabase, get_current_user
 from app.config import ADMIN_EMAIL, MONTHLY_FEE_PHP
+from app.services.email import send_application_approved, send_application_rejected, send_application_activated
 
 router = APIRouter()
 
@@ -93,16 +94,17 @@ def list_applications(
 
 
 @router.patch("/{app_id}/approve")
-def approve_application(
+async def approve_application(
     app_id: str,
     body: ReviewRequest = ReviewRequest(),
     _: dict = Depends(require_admin),
     supabase: Any = Depends(get_supabase),
 ):
-    app_res = supabase.table("professional_applications").select("id, status").eq("id", app_id).execute()
+    app_res = supabase.table("professional_applications").select("id, status, name, email").eq("id", app_id).execute()
     if not app_res.data:
         raise HTTPException(status_code=404, detail="Application not found")
-    if app_res.data[0]["status"] != "pending":
+    app = app_res.data[0]
+    if app["status"] != "pending":
         raise HTTPException(status_code=400, detail="Only pending applications can be approved")
 
     supabase.table("professional_applications").update({
@@ -111,19 +113,22 @@ def approve_application(
         "reviewed_at": datetime.now(timezone.utc).isoformat(),
     }).eq("id", app_id).execute()
 
+    await send_application_approved(app["email"], app["name"], MONTHLY_FEE_PHP)
+
     return {"message": "Approved. Send them the payment link to activate."}
 
 
 @router.patch("/{app_id}/reject")
-def reject_application(
+async def reject_application(
     app_id: str,
     body: ReviewRequest = ReviewRequest(),
     _: dict = Depends(require_admin),
     supabase: Any = Depends(get_supabase),
 ):
-    app_res = supabase.table("professional_applications").select("id").eq("id", app_id).execute()
+    app_res = supabase.table("professional_applications").select("id, name, email").eq("id", app_id).execute()
     if not app_res.data:
         raise HTTPException(status_code=404, detail="Application not found")
+    app = app_res.data[0]
 
     supabase.table("professional_applications").update({
         "status": "rejected",
@@ -131,11 +136,13 @@ def reject_application(
         "reviewed_at": datetime.now(timezone.utc).isoformat(),
     }).eq("id", app_id).execute()
 
+    await send_application_rejected(app["email"], app["name"], body.notes)
+
     return {"message": "Application rejected."}
 
 
 @router.patch("/{app_id}/activate")
-def activate_professional(
+async def activate_professional(
     app_id: str,
     _: dict = Depends(require_admin),
     supabase: Any = Depends(get_supabase),
@@ -167,5 +174,7 @@ def activate_professional(
         "status": "active",
         "payment_status": "paid",
     }).eq("id", app_id).execute()
+
+    await send_application_activated(app["email"], app["name"])
 
     return {"message": f"{app['name']} is now live in the directory."}
