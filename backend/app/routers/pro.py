@@ -23,6 +23,7 @@ class UpdateProfile(BaseModel):
     rate_php: Optional[int] = None
     location: Optional[str] = None
     specialties: Optional[list[str]] = None
+    session_type: Optional[str] = None
 
 
 # ── GET /pro/me ────────────────────────────────────────────────────────────────

@@ -20,6 +20,7 @@ class ApplicationRequest(BaseModel):
     rate_php: int
     avatar_emoji: str = "👨‍⚕️"
     avatar_color: str = "#16a34a"
+    session_type: str = "both"
 
 
 class ReviewRequest(BaseModel):
@@ -62,6 +63,7 @@ def submit_application(
         "rate_php": max(0, req.rate_php),
         "avatar_emoji": req.avatar_emoji,
         "avatar_color": req.avatar_color,
+        "session_type": req.session_type,
         "status": "pending",
         "payment_status": "unpaid",
     }).execute()
@@ -157,6 +159,7 @@ def activate_professional(
         "rate_php": app["rate_php"],
         "avatar_emoji": app["avatar_emoji"],
         "avatar_color": app["avatar_color"],
+        "session_type": app.get("session_type", "both"),
         "is_available": True,
     }).execute()
 
