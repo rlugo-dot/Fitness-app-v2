@@ -1,6 +1,5 @@
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { LayoutDashboard, CalendarDays, Users, UserCircle, LogOut } from 'lucide-react';
-import type { ReactNode } from 'react';
 
 const PRO_NAV = [
   { icon: LayoutDashboard, label: 'Dashboard', to: '/pro',          exact: true  },
@@ -9,7 +8,7 @@ const PRO_NAV = [
   { icon: UserCircle,      label: 'Profile',   to: '/pro/profile',  exact: false },
 ];
 
-export default function ProLayout({ children }: { children: ReactNode }) {
+export default function ProLayout() {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -51,7 +50,7 @@ export default function ProLayout({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      <div className="pb-[68px]">{children}</div>
+      <div className="pb-[68px]"><Outlet /></div>
 
       <nav className="fixed bottom-0 inset-x-0 z-50 bg-slate-900 border-t border-slate-800">
         <div className="max-w-lg mx-auto flex">

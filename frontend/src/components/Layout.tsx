@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { Utensils, TrendingUp, Plus, Dumbbell, MessageSquare } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -20,7 +20,7 @@ function ProfileIcon() {
 }
 
 interface Props {
-  children: ReactNode;
+  children?: ReactNode;
   showNav?: boolean;
 }
 
@@ -36,7 +36,7 @@ export default function Layout({ children, showNav = true }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className={showNav ? 'pb-20' : ''}>{children}</div>
+      <div className={showNav ? 'pb-20' : ''}>{children ?? <Outlet />}</div>
 
       {showNav && (
         <nav className="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-100">

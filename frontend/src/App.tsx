@@ -165,7 +165,7 @@ function AppContent() {
   const needsSetup = profile && !profile.full_name;
   const isAdmin = session?.user?.email === ADMIN_EMAIL;
 
-  // Setup flow — force profile completion before anything else
+  // Setup: force profile completion — no other routes accessible
   if (needsSetup) {
     return (
       <Layout showNav={false}>
@@ -187,26 +187,20 @@ function AppContent() {
     );
   }
 
-  // Pro portal routes — completely separate layout
-  if (location.pathname === '/pro' || location.pathname.startsWith('/pro/')) {
-    return (
-      <ProLayout>
-        <Routes>
-          <Route path="/pro" element={<ProPortal />} />
-          <Route path="/pro/calendar" element={<ProCalendar />} />
-          <Route path="/pro/client/:userId" element={<ProClientView />} />
-          <Route path="/pro/clients" element={<ProClients />} />
-          <Route path="/pro/profile" element={<ProProfileEdit />} />
-          <Route path="*" element={<Navigate to="/pro" replace />} />
-        </Routes>
-      </ProLayout>
-    );
-  }
-
-  // Regular user app
+  // All routes — React Router handles the matching, no pathname.startsWith needed
   return (
-    <Layout showNav>
-      <Routes>
+    <Routes>
+      {/* Pro portal: ProLayout wraps only /pro/* paths */}
+      <Route element={<ProLayout />}>
+        <Route path="/pro" element={<ProPortal />} />
+        <Route path="/pro/calendar" element={<ProCalendar />} />
+        <Route path="/pro/clients" element={<ProClients />} />
+        <Route path="/pro/client/:userId" element={<ProClientView />} />
+        <Route path="/pro/profile" element={<ProProfileEdit />} />
+      </Route>
+
+      {/* User app: regular Layout with bottom nav */}
+      <Route element={<Layout showNav />}>
         <Route path="/" element={<Dashboard profile={profile!} onSignOut={signOut} />} />
         <Route path="/food-search" element={<FoodSearch />} />
         <Route path="/workouts" element={<WorkoutLog />} />
@@ -234,8 +228,8 @@ function AppContent() {
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Layout>
+      </Route>
+    </Routes>
   );
 }
 
