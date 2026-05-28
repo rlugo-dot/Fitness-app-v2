@@ -188,7 +188,7 @@ function AppContent() {
   }
 
   // Pro portal routes — completely separate layout
-  if (location.pathname.startsWith('/pro')) {
+  if (location.pathname === '/pro' || location.pathname.startsWith('/pro/')) {
     return (
       <ProLayout>
         <Routes>
