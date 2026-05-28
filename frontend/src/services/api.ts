@@ -188,6 +188,7 @@ export interface Professional {
   avatar_emoji: string;
   avatar_color: string;
   is_available: boolean;
+  session_type: 'online' | 'in_person' | 'both';
 }
 
 export interface BookingOut {
@@ -367,6 +368,7 @@ export interface ApplicationInput {
   rate_php: number;
   avatar_emoji: string;
   avatar_color: string;
+  session_type: 'online' | 'in_person' | 'both';
 }
 
 export const submitApplication = (data: ApplicationInput) =>
@@ -449,6 +451,7 @@ export interface ProProfile {
   avatar_emoji: string;
   avatar_color: string;
   is_available: boolean;
+  session_type: 'online' | 'in_person' | 'both';
 }
 
 export interface ProBooking {

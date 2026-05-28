@@ -176,12 +176,15 @@ function ProCard({ pro, booked, isSubscribed, onBook }: { pro: Professional; boo
               </span>
             </div>
 
-            <div className="flex items-center gap-3 mt-1.5">
+            <div className="flex items-center gap-3 mt-1.5 flex-wrap">
               <span className="flex items-center gap-1 text-[11px] text-gray-400">
                 <MapPin size={10} /> {pro.location}
               </span>
               <span className="flex items-center gap-1 text-[11px] text-gray-400">
                 <Star size={10} className="text-yellow-400" fill="currentColor" /> {pro.years_exp} yr exp
+              </span>
+              <span className="text-[11px] text-gray-400">
+                {pro.session_type === 'online' ? '🖥️ Online' : pro.session_type === 'in_person' ? '🏢 In-person' : '🔄 Online & In-person'}
               </span>
             </div>
           </div>

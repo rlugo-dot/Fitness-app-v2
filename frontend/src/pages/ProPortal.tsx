@@ -129,7 +129,13 @@ export default function ProPortal() {
             <div className="flex-1 min-w-0">
               <p className="font-bold text-gray-900">{pro.name}</p>
               <p className="text-sm text-gray-500">{pro.title}</p>
-              <p className="text-xs text-gray-400">{pro.location}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-xs text-gray-400">{pro.location}</p>
+                <span className="text-xs text-gray-400">·</span>
+                <p className="text-xs text-gray-400">
+                  {pro.session_type === 'online' ? '🖥️ Online' : pro.session_type === 'in_person' ? '🏢 In-person' : '🔄 Online & In-person'}
+                </p>
+              </div>
             </div>
           </div>
 

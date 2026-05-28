@@ -461,6 +461,7 @@ export default function ProfessionalSignup() {
     rate_php: 0,
     avatar_emoji: '👨‍⚕️',
     avatar_color: '#16a34a',
+    session_type: 'both',
   });
 
   function set(field: keyof ApplicationInput, value: unknown) {
@@ -604,6 +605,31 @@ export default function ProfessionalSignup() {
                 </Field>
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Session Format *</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { value: 'online',    label: 'Online',      icon: '🖥️' },
+                    { value: 'in_person', label: 'In-Person',   icon: '🏢' },
+                    { value: 'both',      label: 'Both',        icon: '🔄' },
+                  ] as const).map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => set('session_type', opt.value)}
+                      className={`flex flex-col items-center gap-1 py-3 rounded-xl border text-sm font-medium transition-all ${
+                        form.session_type === opt.value
+                          ? 'border-green-500 bg-green-50 text-green-700'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      <span className="text-xl">{opt.icon}</span>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Specialties * <span className="text-gray-400 font-normal">({form.specialties.length} selected)</span>
                 </label>
@@ -704,6 +730,7 @@ export default function ProfessionalSignup() {
                 <Row label="Location" value={form.location} />
                 <Row label="Experience" value={`${form.years_exp} year${form.years_exp !== 1 ? 's' : ''}`} />
                 <Row label="Rate" value={`₱${form.rate_php.toLocaleString()}/session`} />
+                <Row label="Format" value={form.session_type === 'online' ? '🖥️ Online only' : form.session_type === 'in_person' ? '🏢 In-person only' : '🔄 Online & In-person'} />
                 <div className="flex gap-2 pt-1">
                   <span className="text-xs text-gray-500 w-20 shrink-0 pt-0.5">Specialties</span>
                   <div className="flex flex-wrap gap-1">
