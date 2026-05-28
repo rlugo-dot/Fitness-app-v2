@@ -58,19 +58,6 @@ export default function ProProfileEdit() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Dark header */}
-      <div className="bg-slate-900 sticky top-0 z-10">
-        <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-3">
-          <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center shrink-0">
-            <span className="text-white font-bold text-base">P</span>
-          </div>
-          <div>
-            <p className="text-white font-bold text-sm leading-tight">My Profile</p>
-            <p className="text-slate-400 text-[10px] leading-tight">Edit your listing</p>
-          </div>
-        </div>
-      </div>
-
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 size={24} className="animate-spin text-blue-500" />

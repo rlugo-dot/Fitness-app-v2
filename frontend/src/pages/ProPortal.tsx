@@ -102,33 +102,16 @@ export default function ProPortal() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Dark header */}
-      <div className="bg-slate-900 sticky top-0 z-10">
-        <div className="max-w-lg mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            {/* Logo */}
-            <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center shrink-0">
-              <span className="text-white font-bold text-base">P</span>
-            </div>
-            <div>
-              <p className="text-white font-bold text-sm leading-tight">Phitness Pro</p>
-              <p className="text-slate-400 text-[10px] leading-tight">Professional Portal</p>
-            </div>
-            <div className="ml-auto flex items-center gap-2">
-              {pendingCount > 0 && (
-                <span className="bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                  {pendingCount} pending
-                </span>
-              )}
-              <span className="bg-blue-500/20 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
-                Pro
-              </span>
-            </div>
+      {pendingCount > 0 && (
+        <div className="max-w-lg mx-auto px-4 pt-3">
+          <div className="bg-amber-500 text-white text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-2">
+            <span className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center font-bold text-[11px]">{pendingCount}</span>
+            pending booking request{pendingCount !== 1 ? 's' : ''} — review below
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="max-w-lg mx-auto px-4 py-5 space-y-4">
+      <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
         {/* Welcome + availability */}
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-4 py-4">

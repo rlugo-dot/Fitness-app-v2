@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, CalendarDays, Users, UserCircle } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, Users, UserCircle, LogOut } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 const PRO_NAV = [
@@ -13,17 +13,44 @@ export default function ProLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Client detail page manages its own header (back button + client name)
+  const isClientDetail = location.pathname.startsWith('/pro/client/');
+
   function isActive(to: string, exact: boolean) {
     if (exact) return location.pathname === to;
-    // /pro/client/:id should highlight the Clients tab
     if (to === '/pro/clients') {
-      return location.pathname.startsWith('/pro/clients') || location.pathname.startsWith('/pro/client/');
+      return (
+        location.pathname.startsWith('/pro/clients') ||
+        location.pathname.startsWith('/pro/client/')
+      );
     }
     return location.pathname.startsWith(to);
   }
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Shared pro header — hidden on client detail so it can use its own */}
+      {!isClientDetail && (
+        <div className="bg-slate-900 sticky top-0 z-20">
+          <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-500 rounded-xl flex items-center justify-center shrink-0">
+              <span className="text-white font-bold text-sm leading-none">P</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-bold text-sm leading-tight">Phitness Pro</p>
+              <p className="text-slate-400 text-[10px] leading-tight">Professional Portal</p>
+            </div>
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-300 hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <LogOut size={12} />
+              Exit
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="pb-[68px]">{children}</div>
 
       <nav className="fixed bottom-0 inset-x-0 z-50 bg-slate-900 border-t border-slate-800">
