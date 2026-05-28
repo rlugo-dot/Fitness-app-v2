@@ -41,6 +41,6 @@ app.include_router(messages.router,        prefix="/api/messages",        tags=[
 app.include_router(pro.router,             prefix="/api/pro",             tags=["pro"])
 
 
-@app.get("/api/health")
+@app.api_route("/api/health", methods=["GET", "HEAD"])
 def health_check():
     return {"status": "ok"}

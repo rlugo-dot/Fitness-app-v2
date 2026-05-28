@@ -48,15 +48,29 @@ def get_pro_bookings(
     pro_id = ctx["pro"]["id"]
     res = (
         supabase.table("booking_requests")
-        .select("*, profiles(full_name)")
+        .select("*")
         .eq("professional_id", pro_id)
         .order("created_at", desc=True)
         .execute()
     )
-    rows = []
-    for row in (res.data or []):
-        row["client"] = row.pop("profiles", None)
-        rows.append(row)
+    rows = res.data or []
+
+    # Fetch client names separately — no FK from booking_requests to profiles
+    user_ids = list({r["user_id"] for r in rows if r.get("user_id")})
+    names: dict = {}
+    if user_ids:
+        profiles_res = (
+            supabase.table("profiles")
+            .select("user_id, full_name")
+            .in_("user_id", user_ids)
+            .execute()
+        )
+        names = {p["user_id"]: p["full_name"] for p in (profiles_res.data or [])}
+
+    for row in rows:
+        uid = row.get("user_id")
+        row["client"] = {"full_name": names.get(uid)} if uid else None
+
     return rows
 
 
