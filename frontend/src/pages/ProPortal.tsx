@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
-  getProMe,
   getProBookings,
   updateBookingStatus,
   toggleProAvailability,
@@ -18,6 +16,7 @@ import {
   Users,
   Clock,
   Activity,
+  RefreshCw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -36,30 +35,33 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: 'bg-slate-100 text-slate-500',
 };
 
-export default function ProPortal() {
-  const navigate = useNavigate();
-  const [pro, setPro] = useState<ProProfile | null>(null);
+interface Props {
+  proProfile: ProProfile;
+}
+
+export default function ProPortal({ proProfile }: Props) {
+  const [pro, setPro] = useState<ProProfile>(proProfile);
   const [bookings, setBookings] = useState<ProBooking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bookingError, setBookingError] = useState(false);
   const [filter, setFilter] = useState<Filter>('all');
   const [toggling, setToggling] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [proData, bookingData] = await Promise.all([getProMe(), getProBookings()]);
-        if (!proData) { navigate('/'); return; }
-        setPro(proData);
-        setBookings(bookingData);
-      } catch {
-        toast.error('Failed to load portal data');
-        navigate('/');
-      }
-      setLoading(false);
+  async function loadBookings() {
+    setBookingError(false);
+    setLoading(true);
+    try {
+      const data = await getProBookings();
+      setBookings(data);
+    } catch {
+      setBookingError(true);
+      toast.error('Could not load bookings');
     }
-    load();
-  }, [navigate]);
+    setLoading(false);
+  }
+
+  useEffect(() => { loadBookings(); }, []);
 
   async function handleToggle() {
     if (!pro || toggling) return;
@@ -92,13 +94,27 @@ export default function ProPortal() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <Loader2 size={28} className="animate-spin text-blue-400" />
       </div>
     );
   }
 
-  if (!pro) return null;
+  if (bookingError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4 px-6">
+        <p className="text-gray-500 text-sm text-center">
+          Could not load bookings. The server may be waking up.
+        </p>
+        <button
+          onClick={loadBookings}
+          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition-colors"
+        >
+          <RefreshCw size={15} /> Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">

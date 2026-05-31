@@ -230,7 +230,7 @@ function AppContent() {
     <Routes>
       {/* Pro portal — only accessible to registered professionals */}
       <Route element={proProfile ? <ProLayout /> : <Navigate to="/profile" replace />}>
-        <Route path="/pro" element={<ProPortal />} />
+        <Route path="/pro" element={<ProPortal proProfile={proProfile!} />} />
         <Route path="/pro/calendar" element={<ProCalendar />} />
         <Route path="/pro/clients" element={<ProClients />} />
         <Route path="/pro/client/:userId" element={<ProClientView />} />
