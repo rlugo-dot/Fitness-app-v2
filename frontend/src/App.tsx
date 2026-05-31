@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useAuth } from './hooks/useAuth';
 import { getProfile, getProMe } from './services/api';
@@ -31,6 +31,7 @@ import ProProfileEdit from './pages/ProProfileEdit';
 import ProCalendar from './pages/ProCalendar';
 import ProLayout from './components/ProLayout';
 import OfflineBanner from './components/OfflineBanner';
+import PortalSelect from './pages/PortalSelect';
 
 const ADMIN_EMAIL = 'richardlyonneuygo@gmail.com';
 
@@ -86,17 +87,24 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 
 function AppContent() {
   const { session, loading: authLoading, sendOtp, verifyOtp, signOut } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [proProfile, setProProfile] = useState<ProProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState(false);
   const [slowLoad, setSlowLoad] = useState(false);
+  // Persisted per-session so a page refresh doesn't re-show the selector
+  const [portalChosen, setPortalChosen] = useState(
+    () => sessionStorage.getItem('portal_chosen') === 'true'
+  );
   const location = useLocation();
 
   useEffect(() => {
     if (!session) {
       setProfile(null);
       setProProfile(null);
+      setPortalChosen(false);
+      sessionStorage.removeItem('portal_chosen');
       setProfileLoading(false);
       return;
     }
@@ -179,6 +187,20 @@ function AppContent() {
 
   const needsSetup = profile && !profile.full_name;
   const isAdmin = session?.user?.email === ADMIN_EMAIL;
+
+  // Pro users who haven't chosen a portal yet see the selection screen
+  if (proProfile && !needsSetup && !portalChosen) {
+    return (
+      <PortalSelect
+        proProfile={proProfile}
+        onChoose={(portal) => {
+          sessionStorage.setItem('portal_chosen', 'true');
+          setPortalChosen(true);
+          navigate(portal === 'pro' ? '/pro' : '/', { replace: true });
+        }}
+      />
+    );
+  }
 
   // Setup: force profile completion — no other routes accessible
   if (needsSetup) {

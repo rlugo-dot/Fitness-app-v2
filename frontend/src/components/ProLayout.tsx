@@ -40,11 +40,11 @@ export default function ProLayout() {
               <p className="text-slate-400 text-[10px] leading-tight">Professional Portal</p>
             </div>
             <button
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate('/')}
               className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-300 hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
             >
               <LogOut size={12} />
-              Exit
+              User App
             </button>
           </div>
         </div>

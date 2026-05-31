@@ -278,32 +278,6 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
                   </button>
                 )}
               </div>
-              {proProfile && (
-                <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 p-4 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
-                      style={{ backgroundColor: (proProfile.avatar_color || '#2563eb') + '33' }}
-                    >
-                      {proProfile.avatar_emoji}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white font-bold text-sm truncate">{proProfile.name}</p>
-                      <p className="text-slate-400 text-xs truncate">{proProfile.title}</p>
-                    </div>
-                    <span className="bg-blue-500/20 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide shrink-0">
-                      Pro
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/pro')}
-                    className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
-                  >
-                    Enter Professional Portal →
-                  </button>
-                </div>
-              )}
               <button
                 type="button"
                 onClick={() => navigate('/health')}
@@ -393,6 +367,15 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
                   className="w-full py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
                   🛡️ Admin Panel
+                </button>
+              )}
+              {proProfile && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/pro')}
+                  className="w-full py-3 bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                  🩺 Switch to Pro Portal
                 </button>
               )}
               <button
