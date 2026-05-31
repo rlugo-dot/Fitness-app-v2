@@ -205,8 +205,8 @@ function AppContent() {
   // All routes — React Router handles the matching, no pathname.startsWith needed
   return (
     <Routes>
-      {/* Pro portal: ProLayout wraps only /pro/* paths */}
-      <Route element={<ProLayout />}>
+      {/* Pro portal — only accessible to registered professionals */}
+      <Route element={proProfile ? <ProLayout /> : <Navigate to="/profile" replace />}>
         <Route path="/pro" element={<ProPortal />} />
         <Route path="/pro/calendar" element={<ProCalendar />} />
         <Route path="/pro/clients" element={<ProClients />} />
