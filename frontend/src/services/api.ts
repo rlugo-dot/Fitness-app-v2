@@ -16,6 +16,7 @@ import type {
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
+  timeout: 40000, // 40s — covers Render free-tier cold starts (~30s)
 });
 
 api.interceptors.request.use(async (config) => {
