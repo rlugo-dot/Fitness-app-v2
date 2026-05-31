@@ -121,7 +121,7 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
               <input
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-green-500 outline-none"
                 placeholder="Juan dela Cruz"
               />
             </div>
@@ -130,33 +130,34 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={age}
-                  onChange={(e) => setAge(e.target.value)}
-                  min={10} max={100}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                  onChange={(e) => setAge(e.target.value.replace(/\D/g, ''))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-green-500 outline-none"
                   placeholder="25"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                  step="0.1" min={30} max={300}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                  onChange={(e) => setWeight(e.target.value.replace(/[^\d.]/g, ''))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-green-500 outline-none"
                   placeholder="65"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   value={height}
-                  onChange={(e) => setHeight(e.target.value)}
-                  min={100} max={250}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                  onChange={(e) => setHeight(e.target.value.replace(/[^\d.]/g, ''))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-green-500 outline-none"
                   placeholder="170"
                 />
               </div>
@@ -206,11 +207,12 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
               </button>
             </div>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={calorieGoal}
-              onChange={(e) => setCalorieGoal(e.target.value)}
-              min={1000} max={5000} step={50}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none"
+              onChange={(e) => setCalorieGoal(e.target.value.replace(/\D/g, ''))}
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-green-500 outline-none"
             />
             <p className="text-xs text-gray-400">
               Tap "Auto-calculate" after filling in your age, weight, height and goal.

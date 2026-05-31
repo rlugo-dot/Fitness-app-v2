@@ -115,7 +115,7 @@ export default function Login({ onSendOtp, onVerifyOtp }: Props) {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       placeholder="juan@email.com"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-base"
                       autoComplete="email"
                     />
                   </div>
@@ -159,6 +159,7 @@ export default function Login({ onSendOtp, onVerifyOtp }: Props) {
                     type="text"
                     inputMode="numeric"
                     maxLength={6}
+                    autoComplete={i === 0 ? 'one-time-code' : 'off'}
                     value={digit}
                     onChange={(e) => handleOtpInput(i, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(i, e)}

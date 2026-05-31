@@ -52,7 +52,8 @@ export default function ProLayout() {
 
       <div className="pb-[68px]"><Outlet /></div>
 
-      <nav className="fixed bottom-0 inset-x-0 z-50 bg-slate-900 border-t border-slate-800">
+      <nav className="fixed bottom-0 inset-x-0 z-50 bg-slate-900 border-t border-slate-800"
+           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="max-w-lg mx-auto flex">
           {PRO_NAV.map(({ icon: Icon, label, to, exact }) => {
             const active = isActive(to, exact);

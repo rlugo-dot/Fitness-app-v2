@@ -39,7 +39,8 @@ export default function Layout({ children, showNav = true }: Props) {
       <div className={showNav ? 'pb-20' : ''}>{children ?? <Outlet />}</div>
 
       {showNav && (
-        <nav className="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-100">
+        <nav className="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-100"
+             style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <div className="max-w-lg mx-auto flex items-end">
             {NAV.map(({ icon: Icon, label, to, exact, center }) => {
               const active = isActive(to, exact);
