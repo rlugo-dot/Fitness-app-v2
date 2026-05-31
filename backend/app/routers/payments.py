@@ -69,7 +69,17 @@ def create_checkout(
         raise HTTPException(status_code=400, detail="You already have an active subscription.")
 
     if not PAYMONGO_SECRET_KEY:
-        raise HTTPException(status_code=503, detail="Payment service not configured yet.")
+        # Test mode: no payment gateway configured — activate immediately
+        now = datetime.now(timezone.utc)
+        expires_at = now + timedelta(days=SUBSCRIPTION_DAYS)
+        supabase.table("subscriptions").upsert({
+            "user_id": current_user["id"],
+            "status": "active",
+            "started_at": now.isoformat(),
+            "expires_at": expires_at.isoformat(),
+            "paymongo_session_id": "test_mode",
+        }, on_conflict="user_id").execute()
+        return {"checkout_url": f"{APP_URL}/subscription/success"}
 
     success_url = f"{APP_URL}/subscription/success"
     cancel_url  = f"{APP_URL}/professionals"
