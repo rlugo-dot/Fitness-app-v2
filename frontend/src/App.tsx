@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useAuth } from './hooks/useAuth';
-import { getProfile } from './services/api';
+import { getProfile, getProMe } from './services/api';
 import type { Profile } from './types';
+import type { ProProfile } from './services/api';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -85,21 +86,34 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 function AppContent() {
   const { session, loading: authLoading, sendOtp, verifyOtp, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [proProfile, setProProfile] = useState<ProProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState(false);
   const [slowLoad, setSlowLoad] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
-    if (!session) { setProfile(null); setProfileLoading(false); return; }
+    if (!session) {
+      setProfile(null);
+      setProProfile(null);
+      setProfileLoading(false);
+      return;
+    }
     setProfileLoading(true);
     setProfileError(false);
     setSlowLoad(false);
 
     const slowTimer = setTimeout(() => setSlowLoad(true), 4000);
 
-    withTimeout(getProfile(), 15000)
-      .then(setProfile)
+    // Fetch both in parallel so the pro card is ready when Profile page opens
+    Promise.all([
+      withTimeout(getProfile(), 15000),
+      getProMe().catch(() => null),
+    ])
+      .then(([prof, pro]) => {
+        setProfile(prof);
+        setProProfile(pro);
+      })
       .catch(() => setProfileError(true))
       .finally(() => { setProfileLoading(false); clearTimeout(slowTimer); });
 
@@ -178,6 +192,7 @@ function AppContent() {
                 onUpdated={setProfile}
                 onSignOut={signOut}
                 isSetup={true}
+                proProfile={proProfile}
               />
             }
           />
@@ -224,6 +239,7 @@ function AppContent() {
               onUpdated={setProfile}
               onSignOut={signOut}
               isAdmin={isAdmin}
+              proProfile={proProfile}
             />
           }
         />

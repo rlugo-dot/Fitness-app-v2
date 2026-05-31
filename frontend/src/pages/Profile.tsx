@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { updateProfile, sendTestNotification, getSubscription, getProMe } from '../services/api';
+import { updateProfile, sendTestNotification, getSubscription } from '../services/api';
 import type { SubscriptionStatus, ProProfile } from '../services/api';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import type { Profile } from '../types';
@@ -12,6 +12,7 @@ interface Props {
   onSignOut: () => void;
   isSetup?: boolean;
   isAdmin?: boolean;
+  proProfile?: ProProfile | null;
 }
 
 const GOAL_OPTIONS = [
@@ -35,7 +36,7 @@ function bmiLabel(bmiVal: string): { label: string; color: string } {
   return { label: 'Obese', color: 'text-red-600' };
 }
 
-export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = false, isAdmin = false }: Props) {
+export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = false, isAdmin = false, proProfile = null }: Props) {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState(profile.full_name || '');
   const [age, setAge] = useState(profile.age?.toString() || '');
@@ -46,13 +47,11 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [sub, setSub] = useState<SubscriptionStatus | null>(null);
-  const [proProfile, setProProfile] = useState<ProProfile | null>(null);
   const { isSupported, isIOS, isStandalone, isSubscribed, loading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
 
   useEffect(() => {
     if (!isSetup) {
       getSubscription().then(setSub).catch(() => {});
-      getProMe().then(p => setProProfile(p || null)).catch(() => {});
     }
   }, [isSetup]);
 
