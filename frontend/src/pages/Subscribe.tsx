@@ -21,6 +21,21 @@ export default function Subscribe() {
     setLoading(true);
     try {
       const { checkout_url } = await createCheckout();
+      // Same-origin URL (test mode) — use React Router to avoid a full-page
+      // reload that wipes sessionStorage and React state.
+      // External URL (real PayMongo checkout) — must hard-redirect.
+      try {
+        const url = new URL(checkout_url);
+        if (url.origin === window.location.origin) {
+          navigate(url.pathname + url.search);
+          return;
+        }
+      } catch {
+        if (checkout_url.startsWith('/')) {
+          navigate(checkout_url);
+          return;
+        }
+      }
       window.location.href = checkout_url;
     } catch (e: any) {
       const msg = e?.response?.data?.detail || 'Could not start checkout. Try again.';
