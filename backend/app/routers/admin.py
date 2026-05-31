@@ -7,7 +7,7 @@ router = APIRouter()
 
 
 def require_admin(current_user: dict = Depends(get_current_user)):
-    if current_user.get("email") != ADMIN_EMAIL:
+    if current_user.get("email", "").lower() != ADMIN_EMAIL.lower():
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user
 
@@ -17,7 +17,7 @@ def get_stats(_: dict = Depends(require_admin), supabase: Any = Depends(get_supa
     profiles     = supabase.table("profiles").select("id", count="exact").execute()
     professionals = supabase.table("professionals").select("id", count="exact").execute()
     pending      = supabase.table("professional_applications").select("id", count="exact").eq("status", "pending").execute()
-    bookings     = supabase.table("professional_bookings").select("id", count="exact").execute()
+    bookings     = supabase.table("booking_requests").select("id", count="exact").execute()
     food_logs    = supabase.table("food_logs").select("id", count="exact").execute()
     workout_logs = supabase.table("workout_logs").select("id", count="exact").execute()
     return {
@@ -38,8 +38,8 @@ def get_all_users(_: dict = Depends(require_admin), supabase: Any = Depends(get_
 @router.get("/bookings")
 def get_all_bookings(_: dict = Depends(require_admin), supabase: Any = Depends(get_supabase)):
     return (
-        supabase.table("professional_bookings")
-        .select("*, professional:professionals(name, title, avatar_emoji, avatar_color)")
+        supabase.table("booking_requests")
+        .select("*")
         .order("created_at", desc=True)
         .execute().data or []
     )

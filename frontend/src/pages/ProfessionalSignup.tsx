@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Leaf, ChevronRight, ChevronLeft, Check, Loader2, ChevronDown } from 'lucide-react';
-import { submitApplication } from '../services/api';
+import { submitApplication, getApplicationFee } from '../services/api';
 import type { ApplicationInput } from '../services/api';
 import { toast } from 'sonner';
 
@@ -25,7 +25,7 @@ const COLORS = [
   { label: 'Amber',  value: '#d97706' },
 ];
 
-const MONTHLY_FEE = 169;
+const MONTHLY_FEE_FALLBACK = 999;
 
 const COUNTRIES = [
   { code: 'PH', name: 'Philippines',   dial: '63',  flag: '🇵🇭' },
@@ -448,6 +448,11 @@ export default function ProfessionalSignup() {
   const [step, setStep] = useState<Step>(1);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [monthlyFee, setMonthlyFee] = useState(MONTHLY_FEE_FALLBACK);
+
+  useEffect(() => {
+    getApplicationFee().then(d => setMonthlyFee(d.monthly_fee_php)).catch(() => {});
+  }, []);
 
   const [form, setForm] = useState<ApplicationInput>({
     name: '',
@@ -512,7 +517,7 @@ export default function ProfessionalSignup() {
             {[
               'We review your application',
               'You receive an approval email',
-              `You pay the ₱${MONTHLY_FEE}/month listing fee`,
+              `You pay the ₱${monthlyFee}/month listing fee`,
               'Your profile goes live on Phitness',
             ].map((step, i) => (
               <div key={i} className="flex items-start gap-3">
@@ -539,7 +544,7 @@ export default function ProfessionalSignup() {
             <Leaf className="text-white" size={24} />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Join as a Professional</h1>
-          <p className="text-gray-500 text-sm mt-1">₱{MONTHLY_FEE}/month · Reach Filipino health seekers</p>
+          <p className="text-gray-500 text-sm mt-1">₱{monthlyFee}/month · Reach Filipino health seekers</p>
         </div>
 
         {/* Progress */}
@@ -716,7 +721,7 @@ export default function ProfessionalSignup() {
               <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
                 <div className="text-2xl">💳</div>
                 <div>
-                  <p className="font-semibold text-green-800 text-sm">₱{MONTHLY_FEE}/month listing fee</p>
+                  <p className="font-semibold text-green-800 text-sm">₱{monthlyFee}/month listing fee</p>
                   <p className="text-xs text-green-700 mt-0.5">Billed after approval. Cancel anytime.</p>
                 </div>
               </div>

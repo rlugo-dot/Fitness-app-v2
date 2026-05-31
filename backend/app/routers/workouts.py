@@ -108,7 +108,7 @@ def get_workout_summary(
     )
     rows = result.data or []
     return {
-        "total_calories_burned": sum(r["calories_burned"] for r in rows),
-        "total_duration_min": sum(r["duration_min"] for r in rows),
+        "total_calories_burned": sum(r["calories_burned"] or 0 for r in rows),
+        "total_duration_min": sum(r["duration_min"] or 0 for r in rows),
         "sessions": len(rows),
     }
