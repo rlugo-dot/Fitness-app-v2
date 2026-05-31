@@ -8,10 +8,17 @@
 
 html {
   scroll-behavior: smooth;
+  /* Use dynamic viewport height — accounts for mobile browser toolbars
+     appearing/disappearing in landscape and during scroll */
+  min-height: 100dvh;
+  /* Tell the browser this app is light-only: prevents dark-mode OS flash
+     on OLED screens before CSS loads */
+  color-scheme: light;
 }
 
 body {
   @apply bg-gray-50;
+  min-height: 100dvh;
   -webkit-overflow-scrolling: touch;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

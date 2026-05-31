@@ -30,6 +30,7 @@ import ProClients from './pages/ProClients';
 import ProProfileEdit from './pages/ProProfileEdit';
 import ProCalendar from './pages/ProCalendar';
 import ProLayout from './components/ProLayout';
+import OfflineBanner from './components/OfflineBanner';
 
 const ADMIN_EMAIL = 'richardlyonneuygo@gmail.com';
 
@@ -252,6 +253,7 @@ function AppContent() {
 export default function App() {
   return (
     <BrowserRouter>
+      <OfflineBanner />
       <AppContent />
       <Toaster position="top-center" />
     </BrowserRouter>

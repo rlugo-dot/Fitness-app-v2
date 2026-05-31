@@ -31,7 +31,7 @@ export default function ProClientView() {
     if (!userId) return;
     getClientData(userId)
       .then(setData)
-      .catch(() => { toast.error('Failed to load client data'); navigate(-1); })
+      .catch(() => { toast.error('Failed to load client data'); navigate('/pro/clients', { replace: true }); })
       .finally(() => setLoading(false));
   }, [userId, navigate]);
 
@@ -71,7 +71,7 @@ export default function ProClientView() {
       <div className="bg-slate-900 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/pro/clients')}
             className="text-slate-400 hover:text-white transition-colors p-1 -ml-1"
           >
             <ChevronLeft size={22} />
