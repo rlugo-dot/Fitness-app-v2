@@ -52,6 +52,7 @@ export default function ProProfileEdit() {
   }
 
   async function handleSignOut() {
+    localStorage.removeItem('portal_chosen');
     await signOut();
     navigate('/');
   }

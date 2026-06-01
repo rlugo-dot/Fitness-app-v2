@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   getProBookings,
   updateBookingStatus,
@@ -40,6 +41,7 @@ interface Props {
 }
 
 export default function ProPortal({ proProfile }: Props) {
+  const navigate = useNavigate();
   const [pro, setPro] = useState<ProProfile>(proProfile);
   const [bookings, setBookings] = useState<ProBooking[]>([]);
   const [loading, setLoading] = useState(true);

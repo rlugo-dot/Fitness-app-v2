@@ -105,21 +105,25 @@ function AppContent() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState(false);
   const [slowLoad, setSlowLoad] = useState(false);
-  // Persisted per-session so a page refresh doesn't re-show the selector
+  // Persisted in localStorage so it survives token refreshes and browser reopens
   const [portalChosen, setPortalChosen] = useState(
-    () => sessionStorage.getItem('portal_chosen') === 'true'
+    () => localStorage.getItem('portal_chosen') === 'true'
   );
   const location = useLocation();
 
   // Keep Render warm — pings /api/health every 9 min while logged in
   useKeepAlive(!!session);
 
+  function handleSignOut() {
+    localStorage.removeItem('portal_chosen');
+    setPortalChosen(false);
+    signOut();
+  }
+
   useEffect(() => {
     if (!session) {
       setProfile(null);
       setProProfile(null);
-      setPortalChosen(false);
-      sessionStorage.removeItem('portal_chosen');
       setProfileLoading(false);
       return;
     }
@@ -192,7 +196,7 @@ function AppContent() {
           >
             Retry
           </button>
-          <button onClick={signOut} className="w-full py-2 text-sm text-gray-400 hover:text-gray-600">
+          <button onClick={handleSignOut} className="w-full py-2 text-sm text-gray-400 hover:text-gray-600">
             Sign Out
           </button>
         </div>
@@ -209,7 +213,7 @@ function AppContent() {
       <PortalSelect
         proProfile={proProfile}
         onChoose={(portal) => {
-          sessionStorage.setItem('portal_chosen', 'true');
+          localStorage.setItem('portal_chosen', 'true');
           setPortalChosen(true);
           navigate(portal === 'pro' ? '/pro' : '/', { replace: true });
         }}
@@ -228,7 +232,7 @@ function AppContent() {
               <ProfilePage
                 profile={profile!}
                 onUpdated={setProfile}
-                onSignOut={signOut}
+                onSignOut={handleSignOut}
                 isSetup={true}
                 proProfile={proProfile}
               />
@@ -254,7 +258,7 @@ function AppContent() {
 
       {/* User app: regular Layout with bottom nav */}
       <Route element={<Layout showNav />}>
-        <Route path="/" element={<Dashboard profile={profile!} onSignOut={signOut} />} />
+        <Route path="/" element={<Dashboard profile={profile!} onSignOut={handleSignOut} />} />
         <Route path="/food-search" element={<FoodSearch />} />
         <Route path="/workouts" element={<WorkoutLog />} />
         <Route path="/integrations" element={<Integrations />} />
@@ -275,7 +279,7 @@ function AppContent() {
             <ProfilePage
               profile={profile!}
               onUpdated={setProfile}
-              onSignOut={signOut}
+              onSignOut={handleSignOut}
               isAdmin={isAdmin}
               proProfile={proProfile}
             />
