@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   getProBookings,
@@ -46,6 +46,8 @@ export default function ProPortal({ proProfile }: Props) {
   const [bookings, setBookings] = useState<ProBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [bookingError, setBookingError] = useState(false);
+  const [retryCountdown, setRetryCountdown] = useState<number | null>(null);
+  const autoRetried = useRef(false);
   const [filter, setFilter] = useState<Filter>('all');
   const [toggling, setToggling] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -58,12 +60,30 @@ export default function ProPortal({ proProfile }: Props) {
       setBookings(data);
     } catch {
       setBookingError(true);
-      toast.error('Could not load bookings');
     }
     setLoading(false);
   }
 
   useEffect(() => { loadBookings(); }, []);
+
+  // On first failure, auto-retry after 10s (Render free tier cold start)
+  useEffect(() => {
+    if (!bookingError || autoRetried.current) return;
+    autoRetried.current = true;
+    let t = 10;
+    setRetryCountdown(t);
+    const id = setInterval(() => {
+      t -= 1;
+      if (t <= 0) {
+        clearInterval(id);
+        setRetryCountdown(null);
+        loadBookings();
+      } else {
+        setRetryCountdown(t);
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [bookingError]);
 
   async function handleToggle() {
     if (!pro || toggling) return;
@@ -105,15 +125,26 @@ export default function ProPortal({ proProfile }: Props) {
   if (bookingError) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4 px-6">
-        <p className="text-gray-500 text-sm text-center">
-          Could not load bookings. The server may be waking up.
-        </p>
-        <button
-          onClick={loadBookings}
-          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition-colors"
-        >
-          <RefreshCw size={15} /> Retry
-        </button>
+        {retryCountdown !== null ? (
+          <>
+            <Loader2 size={24} className="animate-spin text-blue-400" />
+            <p className="text-gray-500 text-sm text-center">
+              Server is waking up. Retrying in {retryCountdown}s…
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-gray-500 text-sm text-center">
+              Could not load bookings. The server may be waking up.
+            </p>
+            <button
+              onClick={loadBookings}
+              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition-colors"
+            >
+              <RefreshCw size={15} /> Retry
+            </button>
+          </>
+        )}
       </div>
     );
   }
