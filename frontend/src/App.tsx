@@ -31,7 +31,6 @@ import ProProfileEdit from './pages/ProProfileEdit';
 import ProCalendar from './pages/ProCalendar';
 import ProLayout from './components/ProLayout';
 import OfflineBanner from './components/OfflineBanner';
-import PortalSelect from './pages/PortalSelect';
 
 const ADMIN_EMAIL = 'richardlyonneuygo@gmail.com';
 
@@ -105,18 +104,12 @@ function AppContent() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState(false);
   const [slowLoad, setSlowLoad] = useState(false);
-  // Persisted in localStorage so it survives token refreshes and browser reopens
-  const [portalChosen, setPortalChosen] = useState(
-    () => localStorage.getItem('portal_chosen') === 'true'
-  );
   const location = useLocation();
 
   // Keep Render warm — pings /api/health every 9 min while logged in
   useKeepAlive(!!session);
 
   function handleSignOut() {
-    localStorage.removeItem('portal_chosen');
-    setPortalChosen(false);
     signOut();
   }
 
@@ -206,20 +199,6 @@ function AppContent() {
 
   const needsSetup = profile && !profile.full_name;
   const isAdmin = session?.user?.email === ADMIN_EMAIL;
-
-  // Pro users who haven't chosen a portal yet see the selection screen
-  if (proProfile && !needsSetup && !portalChosen) {
-    return (
-      <PortalSelect
-        proProfile={proProfile}
-        onChoose={(portal) => {
-          localStorage.setItem('portal_chosen', 'true');
-          setPortalChosen(true);
-          navigate(portal === 'pro' ? '/pro' : '/', { replace: true });
-        }}
-      />
-    );
-  }
 
   // Setup: force profile completion — no other routes accessible
   if (needsSetup) {
