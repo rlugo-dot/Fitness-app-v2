@@ -47,7 +47,7 @@ export default function ProPortal({ proProfile }: Props) {
   const [loading, setLoading] = useState(true);
   const [bookingError, setBookingError] = useState(false);
   const [retryCountdown, setRetryCountdown] = useState<number | null>(null);
-  const autoRetried = useRef(false);
+  const autoRetryCount = useRef(0);
   const [filter, setFilter] = useState<Filter>('all');
   const [toggling, setToggling] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -66,17 +66,17 @@ export default function ProPortal({ proProfile }: Props) {
 
   useEffect(() => { loadBookings(); }, []);
 
-  // On first failure, auto-retry after 10s (Render free tier cold start)
+  // Auto-retry up to 3 times with 15s gaps (covers Render ~30-60s cold start)
   useEffect(() => {
-    if (!bookingError || autoRetried.current) return;
-    autoRetried.current = true;
-    let t = 10;
+    if (!bookingError || autoRetryCount.current >= 3) return;
+    let t = 15;
     setRetryCountdown(t);
     const id = setInterval(() => {
       t -= 1;
       if (t <= 0) {
         clearInterval(id);
         setRetryCountdown(null);
+        autoRetryCount.current += 1;
         loadBookings();
       } else {
         setRetryCountdown(t);
@@ -114,10 +114,15 @@ export default function ProPortal({ proProfile }: Props) {
   const pendingCount  = bookings.filter(b => b.status === 'pending').length;
   const confirmedCount = bookings.filter(b => b.status === 'confirmed').length;
 
-  if (loading) {
+  if (loading || retryCountdown !== null) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
         <Loader2 size={28} className="animate-spin text-blue-400" />
+        {retryCountdown !== null && (
+          <p className="text-slate-400 text-sm">
+            Server is waking up… retrying in {retryCountdown}s
+          </p>
+        )}
       </div>
     );
   }
@@ -125,26 +130,15 @@ export default function ProPortal({ proProfile }: Props) {
   if (bookingError) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4 px-6">
-        {retryCountdown !== null ? (
-          <>
-            <Loader2 size={24} className="animate-spin text-blue-400" />
-            <p className="text-gray-500 text-sm text-center">
-              Server is waking up. Retrying in {retryCountdown}s…
-            </p>
-          </>
-        ) : (
-          <>
-            <p className="text-gray-500 text-sm text-center">
-              Could not load bookings. The server may be waking up.
-            </p>
-            <button
-              onClick={loadBookings}
-              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition-colors"
-            >
-              <RefreshCw size={15} /> Retry
-            </button>
-          </>
-        )}
+        <p className="text-gray-500 text-sm text-center">
+          Could not load bookings. The server may be waking up.
+        </p>
+        <button
+          onClick={() => { autoRetryCount.current = 0; loadBookings(); }}
+          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition-colors"
+        >
+          <RefreshCw size={15} /> Retry
+        </button>
       </div>
     );
   }
