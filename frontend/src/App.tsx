@@ -85,6 +85,18 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
+// Ping the backend every 9 minutes while the user is logged in so Render
+// never goes back to sleep (free tier sleeps after 15 min of inactivity).
+function useKeepAlive(active: boolean) {
+  useEffect(() => {
+    if (!active) return;
+    const ping = () => fetch(`${import.meta.env.VITE_API_URL || '/api'}/health`, { method: 'GET' }).catch(() => {});
+    ping(); // immediate warm-up on login
+    const id = setInterval(ping, 9 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [active]);
+}
+
 function AppContent() {
   const { session, loading: authLoading, sendOtp, verifyOtp, signOut } = useAuth();
   const navigate = useNavigate();
@@ -98,6 +110,9 @@ function AppContent() {
     () => sessionStorage.getItem('portal_chosen') === 'true'
   );
   const location = useLocation();
+
+  // Keep Render warm — pings /api/health every 9 min while logged in
+  useKeepAlive(!!session);
 
   useEffect(() => {
     if (!session) {
