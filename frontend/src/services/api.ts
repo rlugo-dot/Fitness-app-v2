@@ -536,6 +536,7 @@ export interface ProDashboardData {
     rate_php: number;
   };
   clients: ClientSummary[];
+  bookings: ProBooking[];
 }
 
 export const getProDashboard = (): Promise<ProDashboardData> =>

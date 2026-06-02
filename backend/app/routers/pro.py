@@ -218,6 +218,22 @@ def get_pro_dashboard(
             "weight_change_kg": weight_change,
         })
 
+    # Attach client names to all bookings for the requests list
+    all_user_ids = list({b["user_id"] for b in bookings if b.get("user_id")})
+    all_names: dict = {}
+    if all_user_ids:
+        an_res = (
+            supabase.table("profiles")
+            .select("user_id, full_name")
+            .in_("user_id", all_user_ids)
+            .execute()
+        )
+        all_names = {p["user_id"]: p["full_name"] for p in (an_res.data or [])}
+
+    for b in bookings:
+        uid = b.get("user_id")
+        b["client"] = {"full_name": all_names.get(uid)} if uid else None
+
     return {
         "revenue": {
             "earned": len(confirmed) * rate,
@@ -228,6 +244,7 @@ def get_pro_dashboard(
             "rate_php": rate,
         },
         "clients": client_summaries,
+        "bookings": bookings,
     }
 
 

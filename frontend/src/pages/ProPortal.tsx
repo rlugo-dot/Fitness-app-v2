@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  getProBookings,
   getProDashboard,
   updateBookingStatus,
   toggleProAvailability,
@@ -16,7 +15,6 @@ import {
   Loader2,
   CalendarDays,
   Users,
-  Clock,
   TrendingUp,
   TrendingDown,
   Minus,
@@ -144,9 +142,6 @@ export default function ProPortal({ proProfile }: Props) {
   const dashRetryCount = useRef(0);
   const [dashCountdown, setDashCountdown] = useState<number | null>(null);
 
-  // Bookings
-  const [bookings, setBookings] = useState<ProBooking[]>([]);
-  const [bookingsLoading, setBookingsLoading] = useState(true);
   const [bookingFilter, setBookingFilter] = useState<BookingFilter>('pending');
   const [toggling, setToggling] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -163,21 +158,7 @@ export default function ProPortal({ proProfile }: Props) {
     setDashLoading(false);
   }
 
-  async function loadBookings() {
-    setBookingsLoading(true);
-    try {
-      const data = await getProBookings();
-      setBookings(data);
-    } catch {
-      toast.error('Could not load bookings');
-    }
-    setBookingsLoading(false);
-  }
-
-  useEffect(() => {
-    loadDashboard();
-    loadBookings();
-  }, []);
+  useEffect(() => { loadDashboard(); }, []);
 
   // Auto-retry dashboard on cold start (up to 3 × 15s)
   useEffect(() => {
@@ -215,7 +196,7 @@ export default function ProPortal({ proProfile }: Props) {
     setUpdatingId(booking.id);
     try {
       await updateBookingStatus(booking.id, status);
-      setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status } : b));
+      setDashboard(d => d ? { ...d, bookings: d.bookings.map(b => b.id === booking.id ? { ...b, status } : b) } : d);
       if (dashboard) {
         // update local revenue counts optimistically
         const delta = status === 'confirmed' ? 1 : 0;
@@ -238,8 +219,9 @@ export default function ProPortal({ proProfile }: Props) {
     setUpdatingId(null);
   }
 
-  const pendingCount = bookings.filter(b => b.status === 'pending').length;
-  const filtered = bookings.filter(b => bookingFilter === 'all' || b.status === bookingFilter);
+  const bookings = dashboard?.bookings ?? [];
+  const pendingCount = bookings.filter((b: ProBooking) => b.status === 'pending').length;
+  const filtered = bookings.filter((b: ProBooking) => bookingFilter === 'all' || b.status === bookingFilter);
 
   const rev = dashboard?.revenue;
 
@@ -414,7 +396,7 @@ export default function ProPortal({ proProfile }: Props) {
             ))}
           </div>
 
-          {bookingsLoading ? (
+          {dashLoading ? (
             <div className="flex items-center justify-center py-10">
               <Loader2 size={22} className="animate-spin text-blue-400" />
             </div>
