@@ -373,9 +373,9 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
                 <button
                   type="button"
                   onClick={() => navigate('/pro')}
-                  className="w-full py-2 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                  className="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
-                  Switch to Pro Portal →
+                  🩺 Go to Pro Portal
                 </button>
               )}
               <button
