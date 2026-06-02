@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   getProDashboard,
+  getProBookings,
   updateBookingStatus,
   toggleProAvailability,
 } from '../services/api';
@@ -142,6 +143,7 @@ export default function ProPortal({ proProfile }: Props) {
   const dashRetryCount = useRef(0);
   const [dashCountdown, setDashCountdown] = useState<number | null>(null);
 
+  const [bookings, setBookings] = useState<ProBooking[]>([]);
   const [bookingFilter, setBookingFilter] = useState<BookingFilter>('pending');
   const [toggling, setToggling] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -152,8 +154,20 @@ export default function ProPortal({ proProfile }: Props) {
     try {
       const data = await getProDashboard();
       setDashboard(data);
+      // Use bookings from dashboard if available, else fetch separately
+      if (data.bookings && data.bookings.length >= 0) {
+        setBookings(data.bookings);
+      } else {
+        const b = await getProBookings();
+        setBookings(b);
+      }
     } catch {
       setDashError(true);
+      // Try fetching bookings independently as a fallback
+      try {
+        const b = await getProBookings();
+        setBookings(b);
+      } catch {}
     }
     setDashLoading(false);
   }
@@ -219,9 +233,8 @@ export default function ProPortal({ proProfile }: Props) {
     setUpdatingId(null);
   }
 
-  const bookings = dashboard?.bookings ?? [];
-  const pendingCount = bookings.filter((b: ProBooking) => b.status === 'pending').length;
-  const filtered = bookings.filter((b: ProBooking) => bookingFilter === 'all' || b.status === bookingFilter);
+  const pendingCount = bookings.filter(b => b.status === 'pending').length;
+  const filtered = bookings.filter(b => bookingFilter === 'all' || b.status === bookingFilter);
 
   const rev = dashboard?.revenue;
 
