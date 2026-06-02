@@ -409,7 +409,7 @@ export default function ProPortal({ proProfile }: Props) {
             ))}
           </div>
 
-          {dashLoading ? (
+          {(dashLoading || dashCountdown !== null) ? (
             <div className="flex items-center justify-center py-10">
               <Loader2 size={22} className="animate-spin text-blue-400" />
             </div>
