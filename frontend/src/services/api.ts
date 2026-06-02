@@ -15,7 +15,7 @@ import type {
 } from '../types';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: (import.meta.env.VITE_API_URL || '/api').trim(),
   timeout: 40000, // 40s — covers Render free-tier cold starts (~30s)
 });
 
