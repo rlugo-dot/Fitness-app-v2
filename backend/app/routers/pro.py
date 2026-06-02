@@ -130,6 +130,107 @@ def update_pro_profile(
     return res.data[0] if res.data else {}
 
 
+# ── GET /pro/dashboard ────────────────────────────────────────────────────────
+
+@router.get("/dashboard")
+def get_pro_dashboard(
+    ctx: dict = Depends(get_current_pro),
+    supabase: Any = Depends(get_supabase),
+):
+    pro = ctx["pro"]
+    pro_id = pro["id"]
+    rate = pro.get("rate_php") or 0
+
+    # All bookings
+    bookings_res = supabase.table("booking_requests").select("*").eq("professional_id", pro_id).execute()
+    bookings = bookings_res.data or []
+
+    confirmed = [b for b in bookings if b["status"] == "confirmed"]
+    pending   = [b for b in bookings if b["status"] == "pending"]
+
+    # Unique confirmed client IDs
+    confirmed_user_ids = list({b["user_id"] for b in confirmed if b.get("user_id")})
+
+    # Bulk-fetch client names
+    names: dict = {}
+    if confirmed_user_ids:
+        p_res = (
+            supabase.table("profiles")
+            .select("user_id, full_name")
+            .in_("user_id", confirmed_user_ids)
+            .execute()
+        )
+        names = {p["user_id"]: p["full_name"] for p in (p_res.data or [])}
+
+    seven_days_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
+
+    client_summaries = []
+    for uid in confirmed_user_ids:
+        # Weekly calories
+        food_res = (
+            supabase.table("food_logs")
+            .select("calories, log_date")
+            .eq("user_id", uid)
+            .gte("log_date", seven_days_ago)
+            .execute()
+        )
+        by_day: dict = {}
+        for row in (food_res.data or []):
+            d = row["log_date"]
+            by_day[d] = by_day.get(d, 0) + (row["calories"] or 0)
+        avg_cal = round(sum(by_day.values()) / len(by_day)) if by_day else None
+
+        # Weekly workouts
+        wo_res = (
+            supabase.table("workout_logs")
+            .select("id, calories_burned")
+            .eq("user_id", uid)
+            .gte("log_date", seven_days_ago)
+            .execute()
+        )
+        workouts = wo_res.data or []
+        calories_burned = sum((w.get("calories_burned") or 0) for w in workouts)
+
+        # Latest two weights for trend
+        wt_res = (
+            supabase.table("weight_logs")
+            .select("weight_kg, logged_at")
+            .eq("user_id", uid)
+            .order("logged_at", desc=True)
+            .limit(2)
+            .execute()
+        )
+        weights = wt_res.data or []
+        latest_weight = weights[0]["weight_kg"] if weights else None
+        weight_change = (
+            round(weights[0]["weight_kg"] - weights[1]["weight_kg"], 1)
+            if len(weights) >= 2 else None
+        )
+
+        client_summaries.append({
+            "user_id": uid,
+            "name": names.get(uid, "Unknown"),
+            "avg_calories_7d": avg_cal,
+            "workouts_7d": len(workouts),
+            "calories_burned_7d": round(calories_burned),
+            "days_logged_7d": len(by_day),
+            "latest_weight_kg": latest_weight,
+            "weight_change_kg": weight_change,
+        })
+
+    return {
+        "revenue": {
+            "earned": len(confirmed) * rate,
+            "pending_amount": len(pending) * rate,
+            "confirmed_sessions": len(confirmed),
+            "pending_sessions": len(pending),
+            "total_sessions": len(bookings),
+            "rate_php": rate,
+        },
+        "clients": client_summaries,
+    }
+
+
 # ── GET /pro/clients/{user_id} ─────────────────────────────────────────────────
 
 @router.get("/clients/{user_id}")

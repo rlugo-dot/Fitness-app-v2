@@ -514,3 +514,29 @@ export const updateProProfile = (data: { bio?: string; rate_php?: number; locati
 
 export const getClientData = (userId: string): Promise<ClientData> =>
   api.get(`/pro/clients/${userId}`).then((r) => r.data);
+
+export interface ClientSummary {
+  user_id: string;
+  name: string;
+  avg_calories_7d: number | null;
+  workouts_7d: number;
+  calories_burned_7d: number;
+  days_logged_7d: number;
+  latest_weight_kg: number | null;
+  weight_change_kg: number | null;
+}
+
+export interface ProDashboardData {
+  revenue: {
+    earned: number;
+    pending_amount: number;
+    confirmed_sessions: number;
+    pending_sessions: number;
+    total_sessions: number;
+    rate_php: number;
+  };
+  clients: ClientSummary[];
+}
+
+export const getProDashboard = (): Promise<ProDashboardData> =>
+  api.get('/pro/dashboard').then((r) => r.data);
