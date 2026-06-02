@@ -28,10 +28,6 @@ function fmt(n: number) {
   return n.toLocaleString('en-PH');
 }
 
-function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse bg-slate-100 rounded-xl ${className}`} />;
-}
-
 // ── sub-components ───────────────────────────────────────────────────────────
 
 function WeightBadge({ change }: { change: number | null }) {
@@ -63,6 +59,7 @@ export default function ProPortal({ proProfile }: Props) {
   const navigate = useNavigate();
   const [pro, setPro] = useState(proProfile);
   const [status, setStatus] = useState<Status>('loading');
+  const [errorMsg, setErrorMsg] = useState('');
   const [bookings, setBookings] = useState<ProBooking[]>([]);
   const [dashboard, setDashboard] = useState<ProDashboardData | null>(null);
   const [filter, setFilter] = useState<BookingFilter>('pending');
@@ -82,7 +79,10 @@ export default function ProPortal({ proProfile }: Props) {
       setBookings(b);
       setDashboard(d);
       setStatus('ready');
-    } catch {
+  } catch (err: unknown) {
+      const e = err as { response?: { status?: number; data?: { detail?: string } }; message?: string };
+      const detail = e?.response?.data?.detail || e?.message || 'Unknown error';
+      setErrorMsg(`${e?.response?.status ?? '?'} — ${detail}`);
       setStatus('error');
     }
   }
@@ -163,6 +163,11 @@ export default function ProPortal({ proProfile }: Props) {
         <p className="text-sm text-gray-400 max-w-xs">
           The backend is on a free tier that sleeps after inactivity. It usually wakes within 30–60 seconds.
         </p>
+        {errorMsg && (
+          <p className="text-xs font-mono bg-red-50 text-red-600 px-3 py-2 rounded-lg max-w-xs break-all">
+            {errorMsg}
+          </p>
+        )}
         <button
           onClick={load}
           className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition-colors"
