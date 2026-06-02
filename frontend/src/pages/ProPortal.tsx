@@ -151,6 +151,10 @@ export default function ProPortal({ proProfile }: Props) {
   async function loadDashboard() {
     setDashError(false);
     setDashLoading(true);
+    // Ping health first so Render is warm before the authenticated request
+    try {
+      await fetch(`${(import.meta.env.VITE_API_URL || '/api').trim()}/health`);
+    } catch {}
     try {
       const data = await getProDashboard();
       setDashboard(data);
