@@ -5,6 +5,8 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from app.routers import profile, foods, meals, water, workouts, health, food_scan, integrations, weight, social, recommendations, analytics, professionals, notifications, applications, admin, payments, messages, pro
 from app.limiter import limiter
+from app.dependencies import get_supabase
+from fastapi import Depends
 
 app = FastAPI(title="Phitness API", version="1.0.0")
 
@@ -43,4 +45,11 @@ app.include_router(pro.router,             prefix="/api/pro",             tags=[
 
 @app.api_route("/api/health", methods=["GET", "HEAD"])
 def health_check():
+    return {"status": "ok"}
+
+
+@app.get("/api/ping")
+def ping(supabase=Depends(get_supabase)):
+    """Lightweight DB touch — used by UptimeRobot to keep Supabase from pausing."""
+    supabase.table("profiles").select("user_id").limit(1).execute()
     return {"status": "ok"}
