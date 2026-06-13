@@ -34,49 +34,6 @@ import OfflineBanner from './components/OfflineBanner';
 
 const ADMIN_EMAIL = 'richardlyonneuygo@gmail.com';
 
-function SplashScreen() {
-  return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center select-none">
-      {/* Logo */}
-      <div className="splash-logo relative mb-7">
-        {/* Outer glow ring */}
-        <div
-          className="absolute -inset-5 rounded-[44px] bg-green-500"
-          style={{ animation: 'ringPulse 2.4s ease-in-out infinite' }}
-        />
-        {/* Inner soft ring */}
-        <div className="absolute -inset-2 rounded-[36px] bg-green-100/60" />
-        {/* Logo tile */}
-        <div className="relative w-24 h-24 bg-green-600 rounded-[28px] flex items-center justify-center shadow-[0_16px_48px_rgba(22,163,74,0.38)]">
-          <span
-            className="text-white font-bold leading-none"
-            style={{ fontSize: 56, fontFamily: "'Sora', system-ui, sans-serif" }}
-          >
-            P
-          </span>
-        </div>
-      </div>
-
-      {/* Text */}
-      <div className="splash-text text-center">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Phitness</h1>
-        <p className="text-sm text-gray-400 mt-1">Filipino Health &amp; Nutrition</p>
-      </div>
-
-      {/* Bouncing dots */}
-      <div className="splash-dots flex items-center gap-2 mt-12">
-        {[0, 160, 320].map((delay, i) => (
-          <span
-            key={i}
-            className="dot-bounce block w-2 h-2 rounded-full bg-green-400"
-            style={{ animationDelay: `${delay}ms` }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
     promise,
@@ -96,9 +53,37 @@ function useKeepAlive(active: boolean) {
   }, [active]);
 }
 
+// Lazy gate: if proProfile was null at boot (cold-start race), retry getProMe
+// before deciding whether to let the user into the pro portal or redirect.
+function ProPortalGate({ onLoaded }: { onLoaded: (p: ProProfile) => void }) {
+  const navigate = useNavigate();
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    getProMe()
+      .then(p => {
+        if (p) {
+          onLoaded(p);
+        } else {
+          navigate('/profile', { replace: true });
+        }
+      })
+      .catch(() => navigate('/profile', { replace: true }))
+      .finally(() => setChecking(false));
+  }, []);
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <p className="text-sm text-slate-400">Verifying access…</p>
+      </div>
+    );
+  }
+  return <ProLayout />;
+}
+
 function AppContent() {
   const { session, loading: authLoading, sendOtp, verifyOtp, signOut } = useAuth();
-  const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [proProfile, setProProfile] = useState<ProProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -226,8 +211,14 @@ function AppContent() {
   // All routes — React Router handles the matching, no pathname.startsWith needed
   return (
     <Routes>
-      {/* Pro portal — only accessible to registered professionals */}
-      <Route element={proProfile ? <ProLayout /> : <Navigate to="/profile" replace />}>
+      {/* Pro portal — only accessible to registered professionals.
+           If proProfile is null (API failed at boot), attempt a lazy refetch
+           so a cold-start race doesn't permanently block pro users. */}
+      <Route element={
+        proProfile
+          ? <ProLayout />
+          : <ProPortalGate onLoaded={setProProfile} />
+      }>
         <Route path="/pro" element={<ProPortal proProfile={proProfile!} />} />
         <Route path="/pro/calendar" element={<ProCalendar />} />
         <Route path="/pro/clients" element={<ProClients />} />

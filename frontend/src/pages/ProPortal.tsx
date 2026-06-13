@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  getProBookings,
   getProDashboard,
   updateBookingStatus,
   toggleProAvailability,
@@ -71,15 +70,11 @@ export default function ProPortal({ proProfile }: Props) {
     try {
       // Warm Render before authenticated calls
       await fetch(`${API_BASE}/health`).catch(() => {});
-      // Fetch bookings (primary) + dashboard (secondary) in parallel
-      const [b, d] = await Promise.all([
-        getProBookings(),
-        getProDashboard().catch(() => null),
-      ]);
-      setBookings(b);
+      const d = await getProDashboard();
+      setBookings(d.bookings);
       setDashboard(d);
       setStatus('ready');
-  } catch (err: unknown) {
+    } catch (err: unknown) {
       const e = err as { response?: { status?: number; data?: { detail?: string } }; message?: string };
       const detail = e?.response?.data?.detail || e?.message || 'Unknown error';
       setErrorMsg(`${e?.response?.status ?? '?'} — ${detail}`);
@@ -114,11 +109,11 @@ export default function ProPortal({ proProfile }: Props) {
     setUpdatingId(null);
   }
 
-  const pending  = bookings.filter(b => b.status === 'pending');
-  const filtered = bookings.filter(b => filter === 'all' || b.status === filter);
+  const pending   = bookings.filter(b => b.status === 'pending');
+  const filtered  = bookings.filter(b => filter === 'all' || b.status === filter);
   const confirmed = bookings.filter(b => b.status === 'confirmed');
-  const rate     = pro.rate_php ?? 0;
-  const earned   = confirmed.length * rate;
+  const rate      = dashboard?.revenue.rate_php ?? pro.rate_php ?? 0;
+  const earned    = dashboard?.revenue.earned ?? confirmed.length * rate;
 
   // ── loading ──────────────────────────────────────────────────────────────
   if (status === 'loading') {
