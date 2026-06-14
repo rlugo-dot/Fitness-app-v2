@@ -26,6 +26,13 @@ export default function ProClients() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Names that appear more than once need a disambiguating tag
+  const duplicateNames = new Set(
+    clients
+      .map(b => b.client?.full_name ?? '')
+      .filter((name, _, arr) => arr.filter(n => n === name).length > 1)
+  );
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-lg mx-auto px-4 py-5">
@@ -63,9 +70,16 @@ export default function ProClients() {
                     <span className="text-blue-600 font-bold text-sm">{initials}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 truncate">
-                      {b.client?.full_name || 'Unknown'}
-                    </p>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">
+                        {b.client?.full_name || 'Unknown'}
+                      </p>
+                      {duplicateNames.has(b.client?.full_name ?? '') && (
+                        <span className="shrink-0 text-[10px] font-mono font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                          #{b.user_id.slice(-4).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-blue-500 font-medium mt-0.5">View health data →</p>
                   </div>
                   <ChevronRight size={16} className="text-gray-300 shrink-0" />
