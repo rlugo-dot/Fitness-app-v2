@@ -145,8 +145,8 @@ export default function ProClientView() {
           ) : (
             <div className="space-y-4">
               {Object.entries(foodByDate).sort(([a], [b]) => b.localeCompare(a)).map(([date, logs]) => {
-                const totalCal  = logs.reduce((s, l) => s + (l.foods?.calories ?? 0) * (l.quantity_g / 100), 0);
-                const totalProt = logs.reduce((s, l) => s + (l.foods?.protein_g ?? 0) * (l.quantity_g / 100), 0);
+                const totalCal  = logs.reduce((s, l) => s + (l.calories ?? 0), 0);
+                const totalProt = logs.reduce((s, l) => s + (l.protein_g ?? 0), 0);
                 return (
                   <div key={date} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                     <div className="px-4 py-3 bg-slate-50 border-b border-gray-100 flex items-center justify-between">
@@ -163,11 +163,11 @@ export default function ProClientView() {
                             {MEAL_LABEL[log.meal_type] ?? log.meal_type}
                           </span>
                           <span className="text-sm text-gray-800 flex-1 truncate">
-                            {log.foods?.name ?? 'Unknown'}
+                            {log.food_name ?? 'Unknown'}
                           </span>
-                          <span className="text-xs text-gray-400 shrink-0">{log.quantity_g}g</span>
+                          <span className="text-xs text-gray-400 shrink-0">{log.quantity}×</span>
                           <span className="text-xs font-semibold text-orange-600 shrink-0 w-16 text-right">
-                            {log.foods ? Math.round(log.foods.calories * log.quantity_g / 100) : '—'} kcal
+                            {Math.round(log.calories ?? 0)} kcal
                           </span>
                         </div>
                       ))}

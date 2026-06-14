@@ -274,7 +274,7 @@ def get_client_data(
     profile_res = supabase.table("profiles").select("*").eq("id", user_id).execute()
     food_res = (
         supabase.table("food_logs")
-        .select("*, foods(name, calories, protein_g, carbs_g, fat_g)")
+        .select("id, log_date, meal_type, quantity, food_name, calories, protein_g, carbs_g, fat_g")
         .eq("user_id", user_id)
         .gte("log_date", seven_days_ago)
         .order("log_date", desc=True)

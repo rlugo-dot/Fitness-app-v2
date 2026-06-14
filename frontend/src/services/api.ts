@@ -479,8 +479,12 @@ export interface ClientData {
     id: string;
     log_date: string;
     meal_type: string;
-    quantity_g: number;
-    foods: { name: string; calories: number; protein_g: number; carbs_g: number; fat_g: number } | null;
+    quantity: number;
+    food_name: string;
+    calories: number;
+    protein_g: number;
+    carbs_g: number;
+    fat_g: number;
   }>;
   workout_logs: Array<{
     id: string;
