@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getProBookings } from '../services/api';
 import type { ProBooking } from '../services/api';
-import { Users, ChevronRight, Loader2 } from 'lucide-react';
+import { Users, ChevronRight, Loader2, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ProClients() {
   const navigate = useNavigate();
   const [clients, setClients] = useState<ProBooking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     getProBookings()
@@ -25,6 +26,10 @@ export default function ProClients() {
       .catch(() => toast.error('Failed to load clients'))
       .finally(() => setLoading(false));
   }, []);
+
+  const filtered = clients.filter(b =>
+    (b.client?.full_name ?? '').toLowerCase().includes(query.toLowerCase())
+  );
 
   // Names that appear more than once need a disambiguating tag
   const duplicateNames = new Set(
@@ -51,8 +56,34 @@ export default function ProClients() {
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {clients.map(b => {
+          <div className="space-y-3">
+            {/* Search bar */}
+            <div className="relative">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Search clients…"
+                className="w-full bg-white border border-gray-200 rounded-xl pl-9 pr-9 py-2.5 text-sm text-gray-800 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100"
+              />
+              {query && (
+                <button
+                  onClick={() => setQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            {filtered.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-sm text-gray-400">No clients match "{query}"</p>
+              </div>
+            ) : (
+            <div className="space-y-2">
+            {filtered.map(b => {
               const initials = (b.client?.full_name || '?')
                 .split(' ')
                 .map(w => w[0])
@@ -86,6 +117,8 @@ export default function ProClients() {
                 </button>
               );
             })}
+            </div>
+            )}
           </div>
         )}
       </div>
