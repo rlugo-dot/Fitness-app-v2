@@ -61,11 +61,11 @@ def get_pro_bookings(
     if user_ids:
         profiles_res = (
             supabase.table("profiles")
-            .select("user_id, full_name")
-            .in_("user_id", user_ids)
+            .select("id, full_name")
+            .in_("id", user_ids)
             .execute()
         )
-        names = {p["user_id"]: p["full_name"] for p in (profiles_res.data or [])}
+        names = {p["id"]: p["full_name"] for p in (profiles_res.data or [])}
 
     for row in rows:
         uid = row.get("user_id")
@@ -156,11 +156,11 @@ def get_pro_dashboard(
     if confirmed_user_ids:
         p_res = (
             supabase.table("profiles")
-            .select("user_id, full_name")
-            .in_("user_id", confirmed_user_ids)
+            .select("id, full_name")
+            .in_("id", confirmed_user_ids)
             .execute()
         )
-        names = {p["user_id"]: p["full_name"] for p in (p_res.data or [])}
+        names = {p["id"]: p["full_name"] for p in (p_res.data or [])}
 
     seven_days_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
 
@@ -224,11 +224,11 @@ def get_pro_dashboard(
     if all_user_ids:
         an_res = (
             supabase.table("profiles")
-            .select("user_id, full_name")
-            .in_("user_id", all_user_ids)
+            .select("id, full_name")
+            .in_("id", all_user_ids)
             .execute()
         )
-        all_names = {p["user_id"]: p["full_name"] for p in (an_res.data or [])}
+        all_names = {p["id"]: p["full_name"] for p in (an_res.data or [])}
 
     for b in bookings:
         uid = b.get("user_id")
@@ -271,7 +271,7 @@ def get_client_data(
 
     seven_days_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
 
-    profile_res = supabase.table("profiles").select("*").eq("user_id", user_id).execute()
+    profile_res = supabase.table("profiles").select("*").eq("id", user_id).execute()
     food_res = (
         supabase.table("food_logs")
         .select("*, foods(name, calories, protein_g, carbs_g, fat_g)")
