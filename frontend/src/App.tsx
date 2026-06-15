@@ -31,15 +31,10 @@ import ProProfileEdit from './pages/ProProfileEdit';
 import ProCalendar from './pages/ProCalendar';
 import ProLayout from './components/ProLayout';
 import OfflineBanner from './components/OfflineBanner';
+import VitalSigns from './pages/VitalSigns';
+import Medications from './pages/Medications';
 
 const ADMIN_EMAIL = 'richardlyonneuygo@gmail.com';
-
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
-  ]);
-}
 
 // Ping the backend every 9 minutes while the user is logged in so Render
 // never goes back to sleep (free tier sleeps after 15 min of inactivity).
@@ -57,22 +52,18 @@ function useKeepAlive(active: boolean) {
 // before deciding whether to let the user into the pro portal or redirect.
 function ProPortalGate({ onLoaded }: { onLoaded: (p: ProProfile) => void }) {
   const navigate = useNavigate();
-  const [checking, setChecking] = useState(true);
+  const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
     getProMe()
       .then(p => {
-        if (p) {
-          onLoaded(p);
-        } else {
-          navigate('/profile', { replace: true });
-        }
+        if (p) { onLoaded(p); setAllowed(true); }
+        else { navigate('/profile', { replace: true }); }
       })
-      .catch(() => navigate('/profile', { replace: true }))
-      .finally(() => setChecking(false));
+      .catch(() => navigate('/profile', { replace: true }));
   }, []);
 
-  if (checking) {
+  if (!allowed) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <p className="text-sm text-slate-400">Verifying access…</p>
@@ -113,7 +104,10 @@ function AppContent() {
 
     // Fetch both in parallel so the pro card is ready when Profile page opens
     Promise.all([
-      withTimeout(getProfile(), 15000),
+      Promise.race([
+        getProfile(),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000)),
+      ]),
       getProMe().catch(() => null),
     ])
       .then(([prof, pro]) => {
@@ -242,6 +236,8 @@ function AppContent() {
         <Route path="/messages" element={<Messages />} />
         <Route path="/messages/:convId" element={<Conversation />} />
         <Route path="/health" element={<HealthProfile />} />
+        <Route path="/vitals" element={<VitalSigns />} />
+        <Route path="/medications" element={<Medications />} />
         {isAdmin && <Route path="/admin" element={<AdminPanel />} />}
         <Route
           path="/profile"

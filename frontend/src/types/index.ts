@@ -6,6 +6,7 @@ export interface Profile {
   height_cm: number | null;
   goal: 'lose' | 'gain' | 'maintain';
   daily_calorie_goal: number;
+  health_conditions?: string[];
   created_at: string;
   updated_at: string;
 }

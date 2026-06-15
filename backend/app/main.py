@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from app.routers import profile, foods, meals, water, workouts, health, food_scan, integrations, weight, social, recommendations, analytics, professionals, notifications, applications, admin, payments, messages, pro
+from app.routers import profile, foods, meals, water, workouts, health, food_scan, integrations, weight, social, recommendations, analytics, professionals, notifications, applications, admin, payments, messages, pro, vitals, medications
 from app.limiter import limiter
 from app.dependencies import get_supabase
 from fastapi import Depends
@@ -41,6 +41,8 @@ app.include_router(admin.router,           prefix="/api/admin",           tags=[
 app.include_router(payments.router,        prefix="/api/payments",        tags=["payments"])
 app.include_router(messages.router,        prefix="/api/messages",        tags=["messages"])
 app.include_router(pro.router,             prefix="/api/pro",             tags=["pro"])
+app.include_router(vitals.router,          prefix="/api/vitals",          tags=["vitals"])
+app.include_router(medications.router,     prefix="/api/medications",     tags=["medications"])
 
 
 @app.api_route("/api/health", methods=["GET", "HEAD"])
@@ -51,5 +53,5 @@ def health_check():
 @app.get("/api/ping")
 def ping(supabase=Depends(get_supabase)):
     """Lightweight DB touch — used by UptimeRobot to keep Supabase from pausing."""
-    supabase.table("profiles").select("user_id").limit(1).execute()
+    supabase.table("profiles").select("id").limit(1).execute()
     return {"status": "ok"}

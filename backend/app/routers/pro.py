@@ -197,16 +197,17 @@ def get_pro_dashboard(
     confirmed = [b for b in bookings if b["status"] == "confirmed"]
     pending   = [b for b in bookings if b["status"] == "pending"]
 
-    # Unique confirmed client IDs
+    # All unique client IDs across all bookings (superset of confirmed)
+    all_user_ids = list({b["user_id"] for b in bookings if b.get("user_id")})
     confirmed_user_ids = list({b["user_id"] for b in confirmed if b.get("user_id")})
 
-    # Bulk-fetch client names
+    # Single profiles query covers both confirmed clients and all booking cards
     names: dict = {}
-    if confirmed_user_ids:
+    if all_user_ids:
         p_res = (
             supabase.table("profiles")
             .select("id, full_name")
-            .in_("id", confirmed_user_ids)
+            .in_("id", all_user_ids)
             .execute()
         )
         names = {p["id"]: p["full_name"] for p in (p_res.data or [])}
@@ -267,21 +268,10 @@ def get_pro_dashboard(
             "weight_change_kg": weight_change,
         })
 
-    # Attach client names to all bookings for the requests list
-    all_user_ids = list({b["user_id"] for b in bookings if b.get("user_id")})
-    all_names: dict = {}
-    if all_user_ids:
-        an_res = (
-            supabase.table("profiles")
-            .select("id, full_name")
-            .in_("id", all_user_ids)
-            .execute()
-        )
-        all_names = {p["id"]: p["full_name"] for p in (an_res.data or [])}
-
+    # Attach names to all bookings for the requests list (reuse the same dict)
     for b in bookings:
         uid = b.get("user_id")
-        b["client"] = {"full_name": all_names.get(uid)} if uid else None
+        b["client"] = {"full_name": names.get(uid)} if uid else None
 
     return {
         "revenue": {

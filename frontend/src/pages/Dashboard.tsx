@@ -1,8 +1,47 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMeals, getDailySummary, getWater, updateWater, deleteMealLog, getWorkoutSummary } from '../services/api';
+import { getMeals, getDailySummary, getWater, updateWater, deleteMealLog, getWorkoutSummary, getLatestVitals, getMedications } from '../services/api';
+import type { VitalLog, Medication } from '../services/api';
 import type { FoodLog, DailySummary, WaterLog, WorkoutSummary, MealType, Profile } from '../types';
-import { Plus, Trash2, Droplets, Utensils, LogOut, Dumbbell, ChevronLeft, ChevronRight, Sparkles, TrendingUp } from 'lucide-react';
+import { Plus, Trash2, Droplets, Utensils, LogOut, Dumbbell, ChevronLeft, ChevronRight, Sparkles, Activity, Pill } from 'lucide-react';
+
+const CONDITION_LABELS: Record<string, string> = {
+  diabetes: 'Diabetes', hypertension: 'Hypertension', high_cholesterol: 'High Cholesterol',
+  heart_disease: 'Heart Disease', asthma: 'Asthma', gerd: 'GERD', gout: 'Gout',
+  ckd: 'Kidney Disease', thyroid: 'Thyroid', obesity: 'Obesity', anemia: 'Anemia',
+  pcos: 'PCOS', fatty_liver: 'Fatty Liver', osteoporosis: 'Osteoporosis',
+  diabetes_type1: 'Type 1 Diabetes', prediabetes: 'Pre-diabetes',
+};
+
+const FOOD_ALERTS: Record<string, { re: RegExp; label: string }[]> = {
+  diabetes: [
+    { re: /\b(rice|kanin|sinangag|arroz|fried rice|garlic rice)\b/, label: 'High carb' },
+    { re: /\b(soda|cola|juice|softdrink|sugar|cake|donut|halo.halo|leche flan|ube halaya|pastry|candy|ice cream)\b/, label: 'High sugar' },
+  ],
+  prediabetes: [
+    { re: /\b(rice|kanin|sinangag|fried rice)\b/, label: 'High carb' },
+    { re: /\b(soda|cola|juice|softdrink|cake|donut|candy|ice cream)\b/, label: 'High sugar' },
+  ],
+  hypertension: [
+    { re: /\b(chips|chicharon|tocino|longganisa|hotdog|sausage|bacon|fries|fried|soy sauce|patis|bagoong)\b/, label: 'High sodium' },
+  ],
+  gout: [
+    { re: /\b(sardine|anchovy|liver|organ|pugo|balut|tuna|herring|mackerel)\b/, label: 'High purine' },
+  ],
+  high_cholesterol: [
+    { re: /\b(chicharon|lechon|skin|cream|butter|lard|pork fat|fried)\b/, label: 'High sat. fat' },
+  ],
+};
+
+function getFoodAlert(foodName: string, conditions: string[]): string | null {
+  const lower = foodName.toLowerCase();
+  for (const cond of conditions) {
+    for (const rule of FOOD_ALERTS[cond] ?? []) {
+      if (rule.re.test(lower)) return rule.label;
+    }
+  }
+  return null;
+}
 
 interface Props {
   profile: Profile;
@@ -183,6 +222,17 @@ export default function Dashboard({ profile, onSignOut }: Props) {
   const [workoutSummary, setWorkoutSummary] = useState<WorkoutSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [latestVitals, setLatestVitals] = useState<VitalLog | null | undefined>(undefined);
+  const [medications, setMedications] = useState<Medication[]>([]);
+
+  const conditions = profile.health_conditions ?? [];
+
+  // Load health data once (not date-dependent)
+  useEffect(() => {
+    if (conditions.length === 0) return;
+    getLatestVitals().then(setLatestVitals).catch(() => setLatestVitals(null));
+    getMedications().then(setMedications).catch(() => {});
+  }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -335,6 +385,91 @@ export default function Dashboard({ profile, onSignOut }: Props) {
               <Sparkles size={16} /> What should I eat next?
             </button>
 
+            {/* Health Card — only shown when user has active conditions */}
+            {conditions.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm border border-rose-100 overflow-hidden">
+                <div className="px-4 pt-4 pb-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-semibold text-gray-900 text-sm">❤️ Health</span>
+                    <button
+                      onClick={() => navigate('/health')}
+                      className="text-xs text-rose-500 font-medium hover:text-rose-600"
+                    >
+                      Manage
+                    </button>
+                  </div>
+
+                  {/* Condition chips */}
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {conditions.map((c) => (
+                      <span key={c} className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-rose-50 text-rose-600">
+                        {CONDITION_LABELS[c] ?? c}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Vitals + Meds row */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => navigate('/vitals')}
+                      className="flex-1 bg-gray-50 hover:bg-gray-100 rounded-xl p-3 text-left transition-colors"
+                    >
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Activity size={13} className="text-gray-400" />
+                        <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Vitals</span>
+                      </div>
+                      {latestVitals === undefined ? (
+                        <div className="skeleton h-4 w-20 rounded" />
+                      ) : latestVitals == null ? (
+                        <p className="text-xs text-gray-400">No readings</p>
+                      ) : (
+                        <>
+                          {latestVitals.bp_systolic != null && latestVitals.bp_diastolic != null && (
+                            <p className="text-sm font-semibold text-gray-900">
+                              {latestVitals.bp_systolic}/{latestVitals.bp_diastolic}
+                              <span className="text-[10px] font-normal text-gray-400 ml-1">mmHg</span>
+                            </p>
+                          )}
+                          {latestVitals.blood_glucose != null && (
+                            <p className="text-sm font-semibold text-gray-900">
+                              {latestVitals.blood_glucose}
+                              <span className="text-[10px] font-normal text-gray-400 ml-1">mmol/L</span>
+                            </p>
+                          )}
+                          {latestVitals.bp_systolic == null && latestVitals.blood_glucose == null && (
+                            <p className="text-xs text-gray-400">Tap to view</p>
+                          )}
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => navigate('/medications')}
+                      className="flex-1 bg-gray-50 hover:bg-gray-100 rounded-xl p-3 text-left transition-colors"
+                    >
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Pill size={13} className="text-gray-400" />
+                        <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Meds</span>
+                      </div>
+                      {medications.length === 0 ? (
+                        <p className="text-xs text-gray-400">None added</p>
+                      ) : (() => {
+                        const needed = medications.filter(m => m.doses_needed > 0).reduce((s, m) => s + m.doses_needed, 0);
+                        const taken = medications.filter(m => m.doses_needed > 0).reduce((s, m) => s + Math.min(m.taken_today, m.doses_needed), 0);
+                        const done = taken >= needed && needed > 0;
+                        return (
+                          <p className={`text-sm font-semibold ${done ? 'text-green-600' : 'text-gray-900'}`}>
+                            {taken}/{needed}
+                            <span className="text-[10px] font-normal text-gray-400 ml-1">{done ? 'done!' : 'taken'}</span>
+                          </p>
+                        );
+                      })()}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Water */}
             <WaterTracker glasses={water.glasses} goal={water.goal} onUpdate={handleWaterUpdate} />
 
@@ -397,22 +532,32 @@ export default function Dashboard({ profile, onSignOut }: Props) {
                     </div>
                   ) : (
                     <div className="divide-y divide-gray-50">
-                      {mealLogs.map((log) => (
-                        <div key={log.id} className="flex items-center justify-between px-4 py-2.5">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-gray-900 truncate">{log.food_name}</p>
-                            <p className="text-xs text-gray-400">
-                              {Math.round(log.calories)} kcal · P:{Math.round(log.protein_g)}g · C:{Math.round(log.carbs_g)}g · F:{Math.round(log.fat_g)}g
-                            </p>
+                      {mealLogs.map((log) => {
+                        const alert = conditions.length > 0 ? getFoodAlert(log.food_name, conditions) : null;
+                        return (
+                          <div key={log.id} className="flex items-center justify-between px-4 py-2.5">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <p className="text-sm text-gray-900 truncate">{log.food_name}</p>
+                                {alert && (
+                                  <span className="shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                                    {alert}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-400">
+                                {Math.round(log.calories)} kcal · P:{Math.round(log.protein_g)}g · C:{Math.round(log.carbs_g)}g · F:{Math.round(log.fat_g)}g
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleDeleteLog(log.id)}
+                              className="ml-3 p-1 text-gray-300 hover:text-red-500 active:scale-90 transition-all"
+                            >
+                              <Trash2 size={14} />
+                            </button>
                           </div>
-                          <button
-                            onClick={() => handleDeleteLog(log.id)}
-                            className="ml-3 p-1 text-gray-300 hover:text-red-500 active:scale-90 transition-all"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

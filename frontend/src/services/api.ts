@@ -589,3 +589,76 @@ export interface ProDashboardData {
 
 export const getProDashboard = (): Promise<ProDashboardData> =>
   api.get('/pro/dashboard').then((r) => r.data);
+
+// ─── Vital Signs ──────────────────────────────────────────────────────────────
+
+export interface VitalLog {
+  id: string;
+  user_id: string;
+  logged_at: string;
+  bp_systolic: number | null;
+  bp_diastolic: number | null;
+  blood_glucose: number | null;
+  spo2: number | null;
+  heart_rate: number | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export const getVitalLogs = (limit = 50): Promise<VitalLog[]> =>
+  api.get('/vitals', { params: { limit } }).then((r) => r.data);
+
+export const getLatestVitals = (): Promise<VitalLog | null> =>
+  api.get('/vitals/latest').then((r) => r.data);
+
+export const logVitals = (data: {
+  bp_systolic?: number;
+  bp_diastolic?: number;
+  blood_glucose?: number;
+  spo2?: number;
+  heart_rate?: number;
+  notes?: string;
+  logged_at?: string;
+}): Promise<VitalLog> =>
+  api.post('/vitals', data).then((r) => r.data);
+
+export const deleteVitalLog = (id: string) =>
+  api.delete(`/vitals/${id}`);
+
+// ─── Medications ──────────────────────────────────────────────────────────────
+
+export interface Medication {
+  id: string;
+  user_id: string;
+  name: string;
+  dosage: string | null;
+  frequency: string;
+  notes: string | null;
+  active: boolean;
+  taken_today: number;
+  doses_needed: number;
+  created_at: string;
+}
+
+export const getMedications = (): Promise<Medication[]> =>
+  api.get('/medications').then((r) => r.data);
+
+export const addMedication = (data: {
+  name: string;
+  dosage?: string;
+  frequency?: string;
+  notes?: string;
+}): Promise<Medication> =>
+  api.post('/medications', data).then((r) => r.data);
+
+export const updateMedication = (
+  id: string,
+  data: Partial<{ name: string; dosage: string; frequency: string; notes: string; active: boolean }>
+): Promise<Medication> =>
+  api.patch(`/medications/${id}`, data).then((r) => r.data);
+
+export const deleteMedication = (id: string) =>
+  api.delete(`/medications/${id}`);
+
+export const logMedicationDose = (id: string) =>
+  api.post(`/medications/${id}/taken`).then((r) => r.data);

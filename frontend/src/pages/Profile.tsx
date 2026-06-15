@@ -287,6 +287,20 @@ export default function ProfilePage({ profile, onUpdated, onSignOut, isSetup = f
               </button>
               <button
                 type="button"
+                onClick={() => navigate('/vitals')}
+                className="w-full py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+              >
+                <span>📊</span> Vital Signs Log
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/medications')}
+                className="w-full py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+              >
+                <span>💊</span> Medications
+              </button>
+              <button
+                type="button"
                 onClick={() => navigate('/professionals')}
                 className="w-full py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
               >
