@@ -26,6 +26,55 @@ class UpdateProfile(BaseModel):
     session_type: Optional[str] = None
 
 
+class UpdateClientProfile(BaseModel):
+    weight_kg: Optional[float] = None
+    height_cm: Optional[float] = None
+    age: Optional[int] = None
+    daily_calorie_goal: Optional[int] = None
+    goal: Optional[str] = None
+
+
+class NoteCreate(BaseModel):
+    content: str
+
+
+class LogFoodOnBehalf(BaseModel):
+    log_date: str
+    meal_type: str
+    food_name: str
+    quantity: float = 1
+    calories: float
+    protein_g: float = 0
+    carbs_g: float = 0
+    fat_g: float = 0
+
+
+class LogWorkoutOnBehalf(BaseModel):
+    log_date: str
+    activity: str
+    duration_min: int
+    calories_burned: Optional[float] = None
+    notes: Optional[str] = None
+
+
+class LogWeightOnBehalf(BaseModel):
+    weight_kg: float
+    body_fat_pct: Optional[float] = None
+    notes: Optional[str] = None
+
+
+def _verify_client(supabase: Any, pro_id: str, user_id: str):
+    booking = (
+        supabase.table("booking_requests")
+        .select("id")
+        .eq("professional_id", pro_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    if not booking.data:
+        raise HTTPException(status_code=403, detail="No booking with this client")
+
+
 # ── GET /pro/me ────────────────────────────────────────────────────────────────
 
 @router.get("/me")
@@ -258,16 +307,7 @@ def get_client_data(
 ):
     pro_id = ctx["pro"]["id"]
 
-    # Verify booking relationship
-    booking = (
-        supabase.table("booking_requests")
-        .select("id")
-        .eq("professional_id", pro_id)
-        .eq("user_id", user_id)
-        .execute()
-    )
-    if not booking.data:
-        raise HTTPException(status_code=403, detail="No booking with this client")
+    _verify_client(supabase, pro_id, user_id)
 
     seven_days_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
 
@@ -304,3 +344,196 @@ def get_client_data(
         "workout_logs": workout_res.data or [],
         "weight_logs": weight_res.data or [],
     }
+
+
+# ── PATCH /pro/clients/{user_id}/profile ──────────────────────────────────────
+
+@router.patch("/clients/{user_id}/profile")
+def update_client_profile(
+    user_id: str,
+    body: UpdateClientProfile,
+    ctx: dict = Depends(get_current_pro),
+    supabase: Any = Depends(get_supabase),
+):
+    pro_id = ctx["pro"]["id"]
+    _verify_client(supabase, pro_id, user_id)
+
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not updates:
+        raise HTTPException(status_code=400, detail="Nothing to update")
+
+    res = supabase.table("profiles").update(updates).eq("id", user_id).execute()
+    return res.data[0] if res.data else {}
+
+
+# ── GET /pro/clients/{user_id}/notes ──────────────────────────────────────────
+
+@router.get("/clients/{user_id}/notes")
+def get_client_notes(
+    user_id: str,
+    ctx: dict = Depends(get_current_pro),
+    supabase: Any = Depends(get_supabase),
+):
+    pro_id = ctx["pro"]["id"]
+    _verify_client(supabase, pro_id, user_id)
+
+    res = (
+        supabase.table("professional_notes")
+        .select("*")
+        .eq("pro_id", pro_id)
+        .eq("client_id", user_id)
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return res.data or []
+
+
+# ── POST /pro/clients/{user_id}/notes ─────────────────────────────────────────
+
+@router.post("/clients/{user_id}/notes")
+def create_client_note(
+    user_id: str,
+    body: NoteCreate,
+    ctx: dict = Depends(get_current_pro),
+    supabase: Any = Depends(get_supabase),
+):
+    pro_id = ctx["pro"]["id"]
+    _verify_client(supabase, pro_id, user_id)
+
+    res = supabase.table("professional_notes").insert({
+        "pro_id": pro_id,
+        "client_id": user_id,
+        "content": body.content,
+    }).execute()
+
+    if not res.data:
+        raise HTTPException(status_code=500, detail="Failed to create note")
+    return res.data[0]
+
+
+# ── PATCH /pro/clients/{user_id}/notes/{note_id} ──────────────────────────────
+
+@router.patch("/clients/{user_id}/notes/{note_id}")
+def update_client_note(
+    user_id: str,
+    note_id: str,
+    body: NoteCreate,
+    ctx: dict = Depends(get_current_pro),
+    supabase: Any = Depends(get_supabase),
+):
+    pro_id = ctx["pro"]["id"]
+    _verify_client(supabase, pro_id, user_id)
+
+    now = datetime.now(timezone.utc).isoformat()
+    res = (
+        supabase.table("professional_notes")
+        .update({"content": body.content, "updated_at": now})
+        .eq("id", note_id)
+        .eq("pro_id", pro_id)
+        .execute()
+    )
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Note not found")
+    return res.data[0]
+
+
+# ── DELETE /pro/clients/{user_id}/notes/{note_id} ─────────────────────────────
+
+@router.delete("/clients/{user_id}/notes/{note_id}")
+def delete_client_note(
+    user_id: str,
+    note_id: str,
+    ctx: dict = Depends(get_current_pro),
+    supabase: Any = Depends(get_supabase),
+):
+    pro_id = ctx["pro"]["id"]
+    _verify_client(supabase, pro_id, user_id)
+
+    supabase.table("professional_notes").delete().eq("id", note_id).eq("pro_id", pro_id).execute()
+    return {"ok": True}
+
+
+# ── POST /pro/clients/{user_id}/food ──────────────────────────────────────────
+
+@router.post("/clients/{user_id}/food")
+def log_food_on_behalf(
+    user_id: str,
+    body: LogFoodOnBehalf,
+    ctx: dict = Depends(get_current_pro),
+    supabase: Any = Depends(get_supabase),
+):
+    pro_id = ctx["pro"]["id"]
+    _verify_client(supabase, pro_id, user_id)
+
+    res = supabase.table("food_logs").insert({
+        "user_id": user_id,
+        "log_date": body.log_date,
+        "meal_type": body.meal_type,
+        "food_name": body.food_name,
+        "quantity": body.quantity,
+        "calories": body.calories,
+        "protein_g": body.protein_g,
+        "carbs_g": body.carbs_g,
+        "fat_g": body.fat_g,
+    }).execute()
+
+    if not res.data:
+        raise HTTPException(status_code=500, detail="Failed to log food")
+    return res.data[0]
+
+
+# ── POST /pro/clients/{user_id}/workout ───────────────────────────────────────
+
+@router.post("/clients/{user_id}/workout")
+def log_workout_on_behalf(
+    user_id: str,
+    body: LogWorkoutOnBehalf,
+    ctx: dict = Depends(get_current_pro),
+    supabase: Any = Depends(get_supabase),
+):
+    pro_id = ctx["pro"]["id"]
+    _verify_client(supabase, pro_id, user_id)
+
+    insert_data: dict = {
+        "user_id": user_id,
+        "log_date": body.log_date,
+        "activity": body.activity,
+        "duration_min": body.duration_min,
+    }
+    if body.calories_burned is not None:
+        insert_data["calories_burned"] = body.calories_burned
+    if body.notes:
+        insert_data["notes"] = body.notes
+
+    res = supabase.table("workout_logs").insert(insert_data).execute()
+    if not res.data:
+        raise HTTPException(status_code=500, detail="Failed to log workout")
+    return res.data[0]
+
+
+# ── POST /pro/clients/{user_id}/weight ────────────────────────────────────────
+
+@router.post("/clients/{user_id}/weight")
+def log_weight_on_behalf(
+    user_id: str,
+    body: LogWeightOnBehalf,
+    ctx: dict = Depends(get_current_pro),
+    supabase: Any = Depends(get_supabase),
+):
+    pro_id = ctx["pro"]["id"]
+    _verify_client(supabase, pro_id, user_id)
+
+    insert_data: dict = {
+        "user_id": user_id,
+        "weight_kg": body.weight_kg,
+        "logged_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if body.body_fat_pct is not None:
+        insert_data["body_fat_pct"] = body.body_fat_pct
+    if body.notes:
+        insert_data["notes"] = body.notes
+
+    res = supabase.table("weight_logs").insert(insert_data).execute()
+    if not res.data:
+        raise HTTPException(status_code=500, detail="Failed to log weight")
+    return res.data[0]

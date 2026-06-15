@@ -519,6 +519,50 @@ export const updateProProfile = (data: { bio?: string; rate_php?: number; locati
 export const getClientData = (userId: string): Promise<ClientData> =>
   api.get(`/pro/clients/${userId}`).then((r) => r.data);
 
+export const updateClientProfile = (
+  userId: string,
+  data: { weight_kg?: number; height_cm?: number; age?: number; daily_calorie_goal?: number; goal?: string }
+) => api.patch(`/pro/clients/${userId}/profile`, data).then((r) => r.data);
+
+export interface ProNote {
+  id: string;
+  pro_id: string;
+  client_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const getClientNotes = (userId: string): Promise<ProNote[]> =>
+  api.get(`/pro/clients/${userId}/notes`).then((r) => r.data);
+
+export const createClientNote = (userId: string, content: string): Promise<ProNote> =>
+  api.post(`/pro/clients/${userId}/notes`, { content }).then((r) => r.data);
+
+export const updateClientNote = (userId: string, noteId: string, content: string): Promise<ProNote> =>
+  api.patch(`/pro/clients/${userId}/notes/${noteId}`, { content }).then((r) => r.data);
+
+export const deleteClientNote = (userId: string, noteId: string): Promise<void> =>
+  api.delete(`/pro/clients/${userId}/notes/${noteId}`).then((r) => r.data);
+
+export const logClientFood = (
+  userId: string,
+  data: { log_date: string; meal_type: string; food_name: string; quantity: number; calories: number; protein_g?: number; carbs_g?: number; fat_g?: number }
+): Promise<ClientData['food_logs'][number]> =>
+  api.post(`/pro/clients/${userId}/food`, data).then((r) => r.data);
+
+export const logClientWorkout = (
+  userId: string,
+  data: { log_date: string; activity: string; duration_min: number; calories_burned?: number; notes?: string }
+): Promise<ClientData['workout_logs'][number]> =>
+  api.post(`/pro/clients/${userId}/workout`, data).then((r) => r.data);
+
+export const logClientWeight = (
+  userId: string,
+  data: { weight_kg: number; body_fat_pct?: number; notes?: string }
+): Promise<ClientData['weight_logs'][number]> =>
+  api.post(`/pro/clients/${userId}/weight`, data).then((r) => r.data);
+
 export interface ClientSummary {
   user_id: string;
   name: string;
