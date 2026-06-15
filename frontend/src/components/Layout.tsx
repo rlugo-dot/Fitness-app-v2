@@ -12,6 +12,8 @@ const NAV = [
   { icon: MessageSquare, label: 'Messages', to: '/messages',  exact: false },
 ];
 
+// Health is handled separately (opens drawer, not a route)
+
 function ProfileIcon() {
   return (
     <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -43,23 +45,12 @@ export default function Layout({ children, showNav = true }: Props) {
 
       <div className={showNav ? 'pb-20' : ''}>{children ?? <Outlet />}</div>
 
-      {/* Health sidebar tab — always visible on left edge */}
-      {showNav && (
-        <button
-          onClick={() => setHealthOpen(true)}
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-1 bg-white border border-gray-200 border-l-0 rounded-r-2xl px-1.5 py-3 shadow-md active:scale-95 transition-transform"
-        >
-          <HeartPulse size={16} className="text-rose-500" />
-          <span className="text-[8px] font-semibold text-gray-400 [writing-mode:vertical-rl] rotate-180 tracking-wide">HEALTH</span>
-        </button>
-      )}
-
       {showNav && (
         <nav className="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-100"
              style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <div className="max-w-lg mx-auto flex items-end">
             {NAV.map(({ icon: Icon, label, to, exact, center }) => {
-              const active = isActive(to, exact);
+              const active = isActive(to, exact ?? false);
               if (center) {
                 return (
                   <button
@@ -68,9 +59,7 @@ export default function Layout({ children, showNav = true }: Props) {
                     className="flex-1 flex flex-col items-center pb-3 pt-1 -mt-3 active:scale-95 transition-transform duration-100"
                   >
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 ${
-                      active
-                        ? 'bg-green-700 scale-105'
-                        : 'bg-green-600 hover:bg-green-700'
+                      active ? 'bg-green-700 scale-105' : 'bg-green-600 hover:bg-green-700'
                     }`}>
                       <Icon size={22} className="text-white" />
                     </div>
@@ -86,30 +75,40 @@ export default function Layout({ children, showNav = true }: Props) {
                   onClick={() => navigate(to)}
                   className="flex-1 py-2 flex flex-col items-center gap-0.5 active:scale-90 transition-transform duration-100"
                 >
-                  <div className={`p-1.5 rounded-xl transition-all duration-200 ${active ? 'bg-green-50' : ''}`}>
-                    <Icon
-                      size={20}
-                      className={`transition-colors duration-200 ${active ? 'text-green-600' : 'text-gray-400'}`}
-                    />
+                  <div className={`p-1 rounded-xl transition-all duration-200 ${active ? 'bg-green-50' : ''}`}>
+                    <Icon size={18} className={`transition-colors duration-200 ${active ? 'text-green-600' : 'text-gray-400'}`} />
                   </div>
-                  <span className={`text-[10px] font-medium transition-colors duration-200 ${active ? 'text-green-600' : 'text-gray-400'}`}>
+                  <span className={`text-[9px] font-medium transition-colors duration-200 ${active ? 'text-green-600' : 'text-gray-400'}`}>
                     {label}
                   </span>
                 </button>
               );
             })}
 
+            {/* Health — opens drawer */}
+            <button
+              onClick={() => setHealthOpen(true)}
+              className="flex-1 py-2 flex flex-col items-center gap-0.5 active:scale-90 transition-transform duration-100"
+            >
+              <div className={`p-1 rounded-xl transition-all duration-200 ${healthOpen ? 'bg-rose-50' : ''}`}>
+                <HeartPulse size={18} className={`transition-colors duration-200 ${healthOpen ? 'text-rose-500' : 'text-gray-400'}`} />
+              </div>
+              <span className={`text-[9px] font-medium transition-colors duration-200 ${healthOpen ? 'text-rose-500' : 'text-gray-400'}`}>
+                Health
+              </span>
+            </button>
+
             {/* Profile tab */}
             <button
               onClick={() => navigate('/profile')}
               className="flex-1 py-2 flex flex-col items-center gap-0.5 active:scale-90 transition-transform duration-100"
             >
-              <div className={`p-1.5 rounded-xl transition-all duration-200 ${profileActive ? 'bg-green-50' : ''}`}>
+              <div className={`p-1 rounded-xl transition-all duration-200 ${profileActive ? 'bg-green-50' : ''}`}>
                 <span className={`transition-colors duration-200 ${profileActive ? 'text-green-600' : 'text-gray-400'}`}>
                   <ProfileIcon />
                 </span>
               </div>
-              <span className={`text-[10px] font-medium transition-colors duration-200 ${profileActive ? 'text-green-600' : 'text-gray-400'}`}>
+              <span className={`text-[9px] font-medium transition-colors duration-200 ${profileActive ? 'text-green-600' : 'text-gray-400'}`}>
                 Profile
               </span>
             </button>
