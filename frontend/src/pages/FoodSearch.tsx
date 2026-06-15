@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { searchFoods, getFoodCategories, logFood, scanFood, createCustomFood, deleteCustomFood } from '../services/api';
 import type { ScanResult } from '../services/api';
 import type { Food, MealType } from '../types';
-import { Search, ChevronLeft, Plus, Check, Camera, X, Loader2, Barcode, Pencil, Trash2 } from 'lucide-react';
+import { Search, ChevronLeft, Plus, Check, Camera, X, Loader2, Barcode, Pencil, Trash2, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import BarcodeScanner from '../components/BarcodeScanner';
 
@@ -47,6 +47,51 @@ async function lookupBarcode(barcode: string): Promise<BarcodeProduct> {
     image_url: p.image_url || null,
     hasNutrition,
   };
+}
+
+interface OnlineFood {
+  id: string;
+  name: string;
+  brand: string;
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  fiber_g: number;
+}
+
+async function searchUSDA(q: string): Promise<OnlineFood[]> {
+  const key = (import.meta.env.VITE_USDA_API_KEY as string | undefined) || 'DEMO_KEY';
+  const url = new URL('https://api.nal.usda.gov/fdc/v1/foods/search');
+  url.searchParams.set('query', q);
+  url.searchParams.set('pageSize', '15');
+  url.searchParams.set('api_key', key);
+  // Foundation + SR Legacy: standardised per-100g values
+  url.searchParams.set('dataType', 'Foundation,SR Legacy,Survey (FNDDS)');
+
+  const res = await fetch(url.toString(), { signal: AbortSignal.timeout(8000) });
+  if (!res.ok) return [];
+  const data = await res.json();
+
+  return (data.foods ?? []).map((f: Record<string, unknown>) => {
+    const nutrientMap: Record<number, number> = {};
+    for (const n of (f.foodNutrients as Array<{ nutrientId: number; value: number }> ?? [])) {
+      nutrientMap[n.nutrientId] = n.value ?? 0;
+    }
+    const brand = (f.brandOwner as string | undefined) || (f.brandName as string | undefined) || '';
+    const nameRaw = (f.description as string) || '';
+    const name = brand ? `${nameRaw} (${brand})` : nameRaw;
+    return {
+      id: String(f.fdcId),
+      name,
+      brand,
+      calories:   Math.round(nutrientMap[1008] ?? 0),
+      protein_g:  Math.round((nutrientMap[1003] ?? 0) * 10) / 10,
+      carbs_g:    Math.round((nutrientMap[1005] ?? 0) * 10) / 10,
+      fat_g:      Math.round((nutrientMap[1004] ?? 0) * 10) / 10,
+      fiber_g:    Math.round((nutrientMap[1079] ?? 0) * 10) / 10,
+    };
+  }).filter((f: OnlineFood) => f.calories > 0);
 }
 
 const MEAL_LABELS: Record<MealType, string> = {
@@ -115,8 +160,13 @@ export default function FoodSearch() {
   const [barcodeServingG, setBarcodeServingG] = useState(100);
   const [barcodeLogged, setBarcodeLogged] = useState(false);
 
+  const [onlineFoods, setOnlineFoods] = useState<OnlineFood[]>([]);
+  const [onlineLoading, setOnlineLoading] = useState(false);
+  const [onlineLogged, setOnlineLogged] = useState<Set<string>>(new Set());
+
   const searchSeqRef = useRef(0);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const onlineSeqRef = useRef(0);
 
   // Scan state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -148,10 +198,52 @@ export default function FoodSearch() {
     }
   }
 
+  async function loadOnlineFoods(q: string) {
+    const seq = ++onlineSeqRef.current;
+    setOnlineLoading(true);
+    try {
+      const results = await searchUSDA(q);
+      if (onlineSeqRef.current === seq) setOnlineFoods(results);
+    } catch {
+      if (onlineSeqRef.current === seq) setOnlineFoods([]);
+    }
+    if (onlineSeqRef.current === seq) setOnlineLoading(false);
+  }
+
   function handleSearch(q: string) {
     setQuery(q);
     clearTimeout(searchTimerRef.current);
-    searchTimerRef.current = setTimeout(() => loadFoods(q, category), 300);
+    if (!q.trim()) {
+      setOnlineFoods([]);
+      setOnlineLoading(false);
+    }
+    searchTimerRef.current = setTimeout(() => {
+      loadFoods(q, category);
+      if (q.trim().length >= 2) loadOnlineFoods(q.trim());
+    }, 350);
+  }
+
+  async function handleLogOnline(food: OnlineFood) {
+    setLogging(food.id);
+    try {
+      await logFood({
+        food_id: 'usda_' + food.id,
+        meal_type: selectedMeal,
+        quantity: 1,
+        log_date: logDate,
+        food_name: food.name,
+        calories: food.calories,
+        protein_g: food.protein_g,
+        carbs_g: food.carbs_g,
+        fat_g: food.fat_g,
+        fiber_g: food.fiber_g,
+      });
+      setOnlineLogged((prev) => new Set([...prev, food.id]));
+      toast.success(`${food.name.split(',')[0]} logged!`);
+    } catch {
+      toast.error('Failed to log food');
+    }
+    setLogging(null);
   }
 
   function handleCategory(cat: string) {
@@ -495,6 +587,63 @@ export default function FoodSearch() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {/* ── USDA Online Results ── */}
+            {query.trim().length >= 2 && (onlineLoading || onlineFoods.length > 0) && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 py-1">
+                  <div className="flex-1 h-px bg-gray-200" />
+                  <span className="flex items-center gap-1.5 text-xs text-gray-400 font-medium shrink-0">
+                    <Globe size={11} /> More results (USDA)
+                  </span>
+                  <div className="flex-1 h-px bg-gray-200" />
+                </div>
+
+                {onlineLoading ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => <FoodRowSkeleton key={i} />)}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {onlineFoods.map((food) => {
+                      const isLogged = onlineLogged.has(food.id);
+                      return (
+                        <div key={food.id} className="bg-white rounded-xl border border-gray-100 p-3.5 flex items-center gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="font-medium text-gray-900 text-sm">{food.name.split(',')[0]}</p>
+                              <span className="shrink-0 text-[9px] font-semibold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">USDA</span>
+                            </div>
+                            {food.name.includes(',') && (
+                              <p className="text-[10px] text-gray-400 truncate">{food.name.slice(food.name.indexOf(',') + 2)}</p>
+                            )}
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              {food.calories} kcal · P:{food.protein_g}g · C:{food.carbs_g}g · F:{food.fat_g}g
+                            </p>
+                            <p className="text-[10px] text-gray-300">per 100g</p>
+                          </div>
+                          <button
+                            onClick={() => !isLogged && handleLogOnline(food)}
+                            disabled={logging === food.id || isLogged}
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 shrink-0 ${
+                              isLogged ? 'bg-green-100 text-green-600' : 'bg-green-600 text-white hover:bg-green-700 disabled:opacity-60'
+                            }`}
+                          >
+                            {logging === food.id ? (
+                              <Loader2 size={14} className="animate-spin" />
+                            ) : isLogged ? (
+                              <Check size={14} />
+                            ) : (
+                              <Plus size={14} />
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </>

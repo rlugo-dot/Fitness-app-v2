@@ -10,14 +10,14 @@ import {
   Loader2, RefreshCw, ToggleLeft, ToggleRight,
   CheckCircle, XCircle, Eye, CalendarDays,
   PhilippinePeso, Users, Flame, Dumbbell, Scale,
-  TrendingUp, TrendingDown, Minus, ChevronRight,
+  TrendingUp, TrendingDown, Minus, ChevronRight, Clock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API_BASE = (import.meta.env.VITE_API_URL || '/api').trim();
 
 type Status = 'loading' | 'error' | 'ready';
-type BookingFilter = 'pending' | 'confirmed' | 'cancelled' | 'all';
+type BookingFilter = 'pending' | 'pending_client' | 'confirmed' | 'cancelled' | 'all';
 
 interface Props { proProfile: ProProfile }
 
@@ -64,6 +64,8 @@ export default function ProPortal({ proProfile }: Props) {
   const [filter, setFilter] = useState<BookingFilter>('pending');
   const [toggling, setToggling] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [proposingId, setProposingId] = useState<string | null>(null);
+  const [proposedDate, setProposedDate] = useState('');
 
   async function load() {
     setStatus('loading');
@@ -109,9 +111,27 @@ export default function ProPortal({ proProfile }: Props) {
     setUpdatingId(null);
   }
 
-  const pending   = bookings.filter(b => b.status === 'pending');
-  const filtered  = bookings.filter(b => filter === 'all' || b.status === filter);
-  const confirmed = bookings.filter(b => b.status === 'confirmed');
+  async function handleCounterPropose(booking: ProBooking) {
+    if (!proposedDate) { toast.error('Pick a date and time'); return; }
+    setUpdatingId(booking.id);
+    try {
+      await updateBookingStatus(booking.id, 'pending_client', new Date(proposedDate).toISOString());
+      setBookings(prev => prev.map(b =>
+        b.id === booking.id ? { ...b, status: 'pending_client', proposed_date: new Date(proposedDate).toISOString() } : b
+      ));
+      setProposingId(null);
+      setProposedDate('');
+      toast.success('Counter-proposal sent — waiting for client');
+    } catch {
+      toast.error('Failed to send counter-proposal');
+    }
+    setUpdatingId(null);
+  }
+
+  const pending        = bookings.filter(b => b.status === 'pending');
+  const pendingClient  = bookings.filter(b => b.status === 'pending_client');
+  const filtered       = bookings.filter(b => filter === 'all' || b.status === filter);
+  const confirmed      = bookings.filter(b => b.status === 'confirmed');
   const rate      = dashboard?.revenue.rate_php ?? pro.rate_php ?? 0;
   const earned    = dashboard?.revenue.earned ?? confirmed.length * rate;
 
@@ -353,24 +373,28 @@ export default function ProPortal({ proProfile }: Props) {
           <h2 className="font-bold text-gray-900 px-1 mb-3">Booking Requests</h2>
 
           <div className="flex gap-2 overflow-x-auto pb-1 mb-3 no-scrollbar">
-            {(['pending', 'confirmed', 'cancelled', 'all'] as BookingFilter[]).map(f => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold capitalize transition-colors ${
-                  filter === f
-                    ? 'bg-slate-800 text-white'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
-                }`}
-              >
-                {f}
-                {f === 'pending' && pending.length > 0 && (
-                  <span className="ml-1.5 bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                    {pending.length}
-                  </span>
-                )}
-              </button>
-            ))}
+            {(['pending', 'pending_client', 'confirmed', 'cancelled', 'all'] as BookingFilter[]).map(f => {
+              const label = f === 'pending_client' ? 'Awaiting Client' : f;
+              const badge = f === 'pending' ? pending.length : f === 'pending_client' ? pendingClient.length : 0;
+              return (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold capitalize transition-colors ${
+                    filter === f
+                      ? 'bg-slate-800 text-white'
+                      : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  {label}
+                  {badge > 0 && (
+                    <span className="ml-1.5 bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                      {badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {filtered.length === 0 ? (
@@ -392,17 +416,18 @@ export default function ProPortal({ proProfile }: Props) {
                         {b.preferred_date && (
                           <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
                             <CalendarDays size={10} />
-                            {new Date(b.preferred_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            Client prefers: {new Date(b.preferred_date).toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
                           </p>
                         )}
                       </div>
                     </div>
-                    <span className={`shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full capitalize ${
-                      b.status === 'pending'   ? 'bg-amber-100 text-amber-700' :
-                      b.status === 'confirmed' ? 'bg-blue-100 text-blue-700'   :
-                                                 'bg-slate-100 text-slate-500'
+                    <span className={`shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                      b.status === 'pending'        ? 'bg-amber-100 text-amber-700' :
+                      b.status === 'pending_client' ? 'bg-purple-100 text-purple-700' :
+                      b.status === 'confirmed'      ? 'bg-blue-100 text-blue-700'   :
+                                                      'bg-slate-100 text-slate-500'
                     }`}>
-                      {b.status}
+                      {b.status === 'pending_client' ? 'Awaiting Client' : b.status}
                     </span>
                   </div>
 
@@ -410,6 +435,48 @@ export default function ProPortal({ proProfile }: Props) {
                     <p className="text-sm text-gray-600 bg-slate-50 rounded-xl px-3 py-2.5 italic line-clamp-2">
                       "{b.message}"
                     </p>
+                  )}
+
+                  {/* Pro's counter-proposal datetime picker */}
+                  {proposingId === b.id && (
+                    <div className="bg-purple-50 rounded-xl p-3 space-y-2">
+                      <p className="text-xs font-semibold text-purple-800">Propose a new schedule</p>
+                      <input
+                        type="datetime-local"
+                        value={proposedDate}
+                        min={new Date().toISOString().slice(0, 16)}
+                        onChange={(e) => setProposedDate(e.target.value)}
+                        className="w-full border border-purple-200 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-purple-400"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { setProposingId(null); setProposedDate(''); }}
+                          className="flex-1 py-2 border border-gray-200 rounded-lg text-xs font-medium text-gray-600 hover:bg-white"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => handleCounterPropose(b)}
+                          disabled={!proposedDate || updatingId === b.id}
+                          className="flex-1 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors"
+                        >
+                          {updatingId === b.id ? <Loader2 size={12} className="animate-spin mx-auto" /> : 'Send Proposal'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pro's sent counter-proposal */}
+                  {b.status === 'pending_client' && b.proposed_date && (
+                    <div className="bg-purple-50 rounded-xl px-3 py-2.5 flex items-center gap-2">
+                      <Clock size={13} className="text-purple-500 shrink-0" />
+                      <div>
+                        <p className="text-[11px] font-semibold text-purple-800">Your proposal</p>
+                        <p className="text-xs text-purple-700">
+                          {new Date(b.proposed_date).toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
+                        </p>
+                      </div>
+                    </div>
                   )}
 
                   <div className="flex gap-2">
@@ -421,7 +488,7 @@ export default function ProPortal({ proProfile }: Props) {
                         <Eye size={14} /> View Health Data
                       </button>
                     )}
-                    {b.status === 'pending' && (
+                    {b.status === 'pending' && proposingId !== b.id && (
                       <>
                         <button
                           onClick={() => handleStatus(b, 'confirmed')}
@@ -432,13 +499,25 @@ export default function ProPortal({ proProfile }: Props) {
                           Confirm
                         </button>
                         <button
+                          onClick={() => { setProposingId(b.id); setProposedDate(''); }}
+                          disabled={updatingId === b.id}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-purple-50 hover:bg-purple-100 disabled:opacity-50 text-purple-700 font-semibold text-sm rounded-xl transition-colors"
+                        >
+                          <CalendarDays size={14} /> Reschedule
+                        </button>
+                        <button
                           onClick={() => handleStatus(b, 'cancelled')}
                           disabled={updatingId === b.id}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-600 font-semibold text-sm rounded-xl transition-colors"
+                          className="py-2 px-3 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-600 font-semibold text-sm rounded-xl transition-colors"
                         >
-                          <XCircle size={14} /> Decline
+                          <XCircle size={14} />
                         </button>
                       </>
+                    )}
+                    {b.status === 'pending_client' && (
+                      <p className="flex-1 text-center text-xs text-purple-500 font-medium py-2">
+                        Waiting for client to respond…
+                      </p>
                     )}
                     {b.status === 'cancelled' && (
                       <p className="flex-1 text-center text-xs text-gray-400 py-2">No actions available</p>

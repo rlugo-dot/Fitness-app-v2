@@ -144,10 +144,18 @@ def update_booking(
         raise HTTPException(status_code=404, detail="Booking not found")
 
     status = body.get("status")
-    if status not in ("confirmed", "cancelled"):
+    if status not in ("confirmed", "cancelled", "pending_client"):
         raise HTTPException(status_code=400, detail="Invalid status")
 
-    supabase.table("booking_requests").update({"status": status}).eq("id", booking_id).execute()
+    update_data: dict = {"status": status}
+
+    if status == "pending_client":
+        proposed_date = body.get("proposed_date")
+        if not proposed_date:
+            raise HTTPException(status_code=400, detail="proposed_date is required when counter-proposing")
+        update_data["proposed_date"] = proposed_date
+
+    supabase.table("booking_requests").update(update_data).eq("id", booking_id).execute()
     return {"status": status}
 
 

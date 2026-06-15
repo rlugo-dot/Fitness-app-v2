@@ -197,6 +197,7 @@ export interface BookingOut {
   professional_id: string;
   message: string;
   preferred_date: string | null;
+  proposed_date: string | null;
   status: string;
   created_at: string;
   professional?: {
@@ -461,6 +462,7 @@ export interface ProBooking {
   professional_id: string;
   message: string;
   preferred_date: string | null;
+  proposed_date: string | null;
   status: string;
   created_at: string;
   client: { full_name: string } | null;
@@ -507,8 +509,14 @@ export const getProMe = (): Promise<ProProfile | null> =>
 export const getProBookings = (): Promise<ProBooking[]> =>
   api.get('/pro/bookings').then((r) => r.data);
 
-export const updateBookingStatus = (id: string, status: 'confirmed' | 'cancelled') =>
-  api.patch(`/pro/bookings/${id}`, { status }).then((r) => r.data);
+export const updateBookingStatus = (
+  id: string,
+  status: 'confirmed' | 'cancelled' | 'pending_client',
+  proposed_date?: string,
+) => api.patch(`/pro/bookings/${id}`, { status, proposed_date }).then((r) => r.data);
+
+export const respondToBooking = (id: string, action: 'accept' | 'decline') =>
+  api.patch(`/professionals/my-bookings/${id}/respond`, { action }).then((r) => r.data);
 
 export const toggleProAvailability = (): Promise<{ is_available: boolean }> =>
   api.patch('/pro/availability').then((r) => r.data);

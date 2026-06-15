@@ -7,6 +7,7 @@ import {
   getMyBookings,
   getSubscription,
   startConversation,
+  respondToBooking,
 } from '../services/api';
 import type { Professional, BookingOut, SubscriptionStatus } from '../services/api';
 import {
@@ -72,23 +73,28 @@ function Avatar({ emoji, color, size = 'md' }: { emoji: string; color: string; s
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
-  pending:   { label: 'Pending',   icon: <Clock size={11} />,        className: 'bg-amber-50 text-amber-700 border-amber-200' },
-  confirmed: { label: 'Confirmed', icon: <CheckCircle2 size={11} />, className: 'bg-green-50 text-green-700 border-green-200' },
-  cancelled: { label: 'Cancelled', icon: <XCircle size={11} />,      className: 'bg-red-50 text-red-500 border-red-200' },
+  pending:        { label: 'Pending',         icon: <Clock size={11} />,        className: 'bg-amber-50 text-amber-700 border-amber-200' },
+  pending_client: { label: 'Response Needed', icon: <Clock size={11} />,        className: 'bg-purple-50 text-purple-700 border-purple-200' },
+  confirmed:      { label: 'Confirmed',       icon: <CheckCircle2 size={11} />, className: 'bg-green-50 text-green-700 border-green-200' },
+  cancelled:      { label: 'Cancelled',       icon: <XCircle size={11} />,      className: 'bg-red-50 text-red-500 border-red-200' },
 };
 
 // ─── Booking Modal ─────────────────────────────────────────────────────────────
 function BookingModal({ pro, onClose, onSuccess }: { pro: Professional; onClose: () => void; onSuccess: () => void }) {
   const [message, setMessage] = useState('');
-  const [date, setDate] = useState('');
+  const [datetime, setDatetime] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const today = new Date().toISOString().split('T')[0];
+  const minDatetime = new Date().toISOString().slice(0, 16);
 
   async function handleSubmit() {
     if (!message.trim()) { toast.error('Please write a message'); return; }
     setSubmitting(true);
     try {
-      await bookProfessional({ professional_id: pro.id, message: message.trim(), preferred_date: date || undefined });
+      await bookProfessional({
+        professional_id: pro.id,
+        message: message.trim(),
+        preferred_date: datetime ? new Date(datetime).toISOString() : undefined,
+      });
       toast.success(`Request sent to ${pro.name.split(',')[0]}!`);
       onSuccess();
     } catch { toast.error('Failed to send request'); }
@@ -119,10 +125,14 @@ function BookingModal({ pro, onClose, onSuccess }: { pro: Professional; onClose:
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1.5">Preferred date <span className="text-gray-400">(optional)</span></label>
+          <label className="block text-xs font-medium text-gray-600 mb-1.5">
+            Preferred date &amp; time <span className="text-gray-400">(optional)</span>
+          </label>
           <input
-            type="date" value={date} min={today}
-            onChange={(e) => setDate(e.target.value)}
+            type="datetime-local"
+            value={datetime}
+            min={minDatetime}
+            onChange={(e) => setDatetime(e.target.value)}
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
@@ -241,7 +251,22 @@ function ProCard({ pro, booked, isSubscribed, onBook }: { pro: Professional; boo
 }
 
 // ─── My Bookings Tab ───────────────────────────────────────────────────────────
-function MyBookingsTab({ bookings, loading, onMessage }: { bookings: BookingOut[]; loading: boolean; onMessage: (professionalId: string) => void }) {
+function MyBookingsTab({
+  bookings, loading, onMessage, onRespond,
+}: {
+  bookings: BookingOut[];
+  loading: boolean;
+  onMessage: (professionalId: string) => void;
+  onRespond: (id: string, action: 'accept' | 'decline') => Promise<void>;
+}) {
+  const [respondingId, setRespondingId] = useState<string | null>(null);
+
+  async function handleRespond(id: string, action: 'accept' | 'decline') {
+    setRespondingId(id);
+    await onRespond(id, action);
+    setRespondingId(null);
+  }
+
   if (loading) return (
     <div className="space-y-3">
       {[1, 2].map((i) => <BookingRowSkeleton key={i} />)}
@@ -255,13 +280,23 @@ function MyBookingsTab({ bookings, loading, onMessage }: { bookings: BookingOut[
     </div>
   );
 
+  // Put pending_client bookings first so action-required items surface
+  const sorted = [...bookings].sort((a, b) =>
+    (a.status === 'pending_client' ? -1 : 0) - (b.status === 'pending_client' ? -1 : 0)
+  );
+
   return (
     <div className="space-y-3">
-      {bookings.map((b) => {
+      {sorted.map((b) => {
         const status = STATUS_CONFIG[b.status] ?? STATUS_CONFIG['pending'];
         const pro = b.professional;
+        const needsResponse = b.status === 'pending_client';
         return (
-          <div key={b.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+          <div
+            key={b.id}
+            className={`bg-white rounded-2xl shadow-sm p-4 space-y-3 border ${needsResponse ? 'border-purple-200' : 'border-gray-100'}`}
+          >
+            {/* Pro info + status badge */}
             <div className="flex items-start gap-3">
               {pro ? (
                 <Avatar emoji={pro.avatar_emoji} color={pro.avatar_color} size="sm" />
@@ -281,15 +316,52 @@ function MyBookingsTab({ bookings, loading, onMessage }: { bookings: BookingOut[
               {b.message}
             </p>
 
+            {/* Dates row */}
             <div className="flex items-center justify-between text-[11px] text-gray-400">
               <span>Sent {new Date(b.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-              {b.preferred_date && (
+              {b.preferred_date && !needsResponse && (
                 <span className="flex items-center gap-1">
                   <Calendar size={10} />
-                  Preferred: {new Date(b.preferred_date + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
+                  {new Date(b.preferred_date).toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
                 </span>
               )}
             </div>
+
+            {/* Pro's counter-proposal banner + actions */}
+            {needsResponse && b.proposed_date && (
+              <div className="bg-purple-50 rounded-xl px-3 py-3 space-y-3">
+                <div>
+                  <p className="text-xs font-semibold text-purple-900">
+                    {pro?.name?.split(',')[0] ?? 'Your professional'} proposed a new schedule
+                  </p>
+                  <p className="text-sm font-bold text-purple-800 mt-1 flex items-center gap-1.5">
+                    <Calendar size={13} />
+                    {new Date(b.proposed_date).toLocaleString('en-PH', {
+                      weekday: 'short', month: 'short', day: 'numeric',
+                      year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true,
+                    })}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleRespond(b.id, 'accept')}
+                    disabled={respondingId === b.id}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors active:scale-95"
+                  >
+                    {respondingId === b.id ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                    Accept
+                  </button>
+                  <button
+                    onClick={() => handleRespond(b.id, 'decline')}
+                    disabled={respondingId === b.id}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-white hover:bg-red-50 disabled:opacity-50 border border-red-200 text-red-600 text-sm font-semibold rounded-xl transition-colors active:scale-95"
+                  >
+                    <X size={13} /> Decline
+                  </button>
+                </div>
+              </div>
+            )}
+
             <button
               onClick={() => onMessage(b.professional_id)}
               className="w-full flex items-center justify-center gap-1.5 py-2 bg-green-50 hover:bg-green-100 text-green-700 text-xs font-semibold rounded-xl transition-colors active:scale-95"
@@ -371,11 +443,15 @@ export default function Professionals() {
               className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all relative ${tab === 'bookings' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}
             >
               My Bookings
-              {bookings.length > 0 && (
+              {bookings.filter(b => b.status === 'pending_client').length > 0 ? (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-purple-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {bookings.filter(b => b.status === 'pending_client').length}
+                </span>
+              ) : bookings.length > 0 ? (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-green-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {bookings.length}
                 </span>
-              )}
+              ) : null}
             </button>
           </div>
 
@@ -421,6 +497,15 @@ export default function Professionals() {
                 const conv = await startConversation(professionalId);
                 navigate(`/messages/${conv.id}`);
               } catch { toast.error('Could not open conversation'); }
+            }}
+            onRespond={async (id, action) => {
+              try {
+                await respondToBooking(id, action);
+                setBookings(prev => prev.map(b =>
+                  b.id === id ? { ...b, status: action === 'accept' ? 'confirmed' : 'cancelled' } : b
+                ));
+                toast.success(action === 'accept' ? 'Session confirmed!' : 'Proposal declined');
+              } catch { toast.error('Failed to respond'); }
             }}
           />
         ) : loading ? (

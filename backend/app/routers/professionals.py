@@ -122,6 +122,36 @@ def book_professional(
     return result.data[0]
 
 
+@router.patch("/my-bookings/{booking_id}/respond")
+def respond_to_booking(
+    booking_id: str,
+    body: dict,
+    current_user: dict = Depends(get_current_user),
+    supabase: Any = Depends(get_supabase),
+):
+    """Client accepts or declines a pro's counter-proposal."""
+    action = body.get("action")
+    if action not in ("accept", "decline"):
+        raise HTTPException(status_code=400, detail="action must be 'accept' or 'decline'")
+
+    existing = (
+        supabase.table("booking_requests")
+        .select("id, status")
+        .eq("id", booking_id)
+        .eq("user_id", current_user["id"])
+        .execute()
+    )
+    if not existing.data:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    if existing.data[0]["status"] != "pending_client":
+        raise HTTPException(status_code=400, detail="No counter-proposal to respond to")
+
+    new_status = "confirmed" if action == "accept" else "cancelled"
+    supabase.table("booking_requests").update({"status": new_status}).eq("id", booking_id).execute()
+    return {"status": new_status}
+
+
 @router.get("/my-bookings", response_model=list[BookingOut])
 def my_bookings(
     current_user: dict = Depends(get_current_user),
