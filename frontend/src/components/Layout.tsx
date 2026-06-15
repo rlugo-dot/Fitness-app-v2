@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useLocation, useNavigate, Outlet } from 'react-router-dom';
-import { Utensils, TrendingUp, Plus, Dumbbell, MessageSquare } from 'lucide-react';
+import { Utensils, TrendingUp, Plus, Dumbbell, MessageSquare, HeartPulse } from 'lucide-react';
 import type { ReactNode } from 'react';
+import HealthDrawer from './HealthDrawer';
 
 const NAV = [
   { icon: Utensils,      label: 'Today',    to: '/',          exact: true },
@@ -27,6 +29,7 @@ interface Props {
 export default function Layout({ children, showNav = true }: Props) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [healthOpen, setHealthOpen] = useState(false);
 
   function isActive(to: string, exact: boolean) {
     return exact ? location.pathname === to : location.pathname.startsWith(to);
@@ -36,7 +39,20 @@ export default function Layout({ children, showNav = true }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <HealthDrawer open={healthOpen} onClose={() => setHealthOpen(false)} />
+
       <div className={showNav ? 'pb-20' : ''}>{children ?? <Outlet />}</div>
+
+      {/* Health sidebar tab — always visible on left edge */}
+      {showNav && (
+        <button
+          onClick={() => setHealthOpen(true)}
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-1 bg-white border border-gray-200 border-l-0 rounded-r-2xl px-1.5 py-3 shadow-md active:scale-95 transition-transform"
+        >
+          <HeartPulse size={16} className="text-rose-500" />
+          <span className="text-[8px] font-semibold text-gray-400 [writing-mode:vertical-rl] rotate-180 tracking-wide">HEALTH</span>
+        </button>
+      )}
 
       {showNav && (
         <nav className="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-100"
