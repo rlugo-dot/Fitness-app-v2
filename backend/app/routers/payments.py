@@ -5,7 +5,11 @@ import httpx
 import base64
 import hmac
 import hashlib
+import json
+import logging
 from app.dependencies import get_supabase, get_current_user
+
+logger = logging.getLogger(__name__)
 from app.config import (
     PAYMONGO_SECRET_KEY, PAYMONGO_WEBHOOK_SECRET,
     APP_URL, SUBSCRIPTION_PRICE_PHP, SUBSCRIPTION_DAYS,
@@ -139,7 +143,8 @@ async def paymongo_webhook(request: Request, supabase: Any = Depends(get_supabas
     # Verify signature if secret is configured
     if PAYMONGO_WEBHOOK_SECRET:
         sig_header = request.headers.get("paymongo-signature", "")
-        parts = {p.split("=")[0]: p.split("=")[1] for p in sig_header.split(",") if "=" in p}
+        # Use split("=", 1) so base64-padded values with "=" don't get truncated
+        parts = {p.split("=", 1)[0]: p.split("=", 1)[1] for p in sig_header.split(",") if "=" in p}
         ts  = parts.get("t", "")
         sig = parts.get("te", "") or parts.get("li", "")
         expected = hmac.new(
@@ -151,26 +156,38 @@ async def paymongo_webhook(request: Request, supabase: Any = Depends(get_supabas
             raise HTTPException(status_code=400, detail="Invalid signature")
 
     try:
-        body = await request.json() if not raw_body else __import__("json").loads(raw_body)
+        body = json.loads(raw_body)
         event_type = body.get("data", {}).get("attributes", {}).get("type", "")
 
         if event_type == "checkout_session.payment.paid":
-            attrs    = body["data"]["attributes"]["data"]["attributes"]
-            user_id  = attrs.get("metadata", {}).get("user_id")
+            attrs   = body["data"]["attributes"]["data"]["attributes"]
+            user_id = attrs.get("metadata", {}).get("user_id")
             if not user_id:
+                logger.warning("PayMongo webhook: paid event missing user_id in metadata")
                 return {"status": "ok"}
 
             now        = datetime.now(timezone.utc)
             expires_at = now + timedelta(days=SUBSCRIPTION_DAYS)
 
             supabase.table("subscriptions").upsert({
-                "user_id":   user_id,
-                "status":    "active",
+                "user_id":    user_id,
+                "status":     "active",
                 "started_at": now.isoformat(),
                 "expires_at": expires_at.isoformat(),
             }, on_conflict="user_id").execute()
 
-    except Exception:
-        pass  # Always return 200 so PayMongo doesn't retry indefinitely
+            logger.info("Subscription activated for user %s, expires %s", user_id, expires_at.date())
+
+        else:
+            logger.debug("PayMongo webhook: unhandled event type %r (ignored)", event_type)
+
+    except (KeyError, ValueError, TypeError) as exc:
+        # Malformed payload — log and return 400 so PayMongo doesn't keep retrying a bad event
+        logger.error("PayMongo webhook: malformed payload — %s", exc, exc_info=True)
+        raise HTTPException(status_code=400, detail=f"Malformed webhook payload: {exc}")
+    except Exception as exc:
+        # Unexpected error (e.g. DB down) — return 500 so PayMongo retries later
+        logger.error("PayMongo webhook: unexpected error — %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal error processing webhook")
 
     return {"status": "ok"}
