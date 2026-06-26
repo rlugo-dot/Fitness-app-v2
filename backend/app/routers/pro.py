@@ -69,10 +69,11 @@ def _verify_client(supabase: Any, pro_id: str, user_id: str):
         .select("id")
         .eq("professional_id", pro_id)
         .eq("user_id", user_id)
+        .eq("status", "confirmed")
         .execute()
     )
     if not booking.data:
-        raise HTTPException(status_code=403, detail="No booking with this client")
+        raise HTTPException(status_code=403, detail="No confirmed booking with this client")
 
 
 # ── GET /pro/me ────────────────────────────────────────────────────────────────
