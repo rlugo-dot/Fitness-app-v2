@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ChevronLeft, Plus, Pill, Check, Trash2 } from 'lucide-react';
+import { ChevronLeft, Plus, Pill, Check, Trash2, Search } from 'lucide-react';
 import { getMedications, addMedication, deleteMedication, logMedicationDose } from '../services/api';
 import type { Medication } from '../services/api';
 
@@ -20,6 +20,154 @@ const FREQ_OPTIONS = [
   { value: 'as_needed', label: 'As needed' },
   { value: 'weekly', label: 'Weekly' },
 ];
+
+const MEDICATIONS_LIST = [
+  // Vitamins & Minerals
+  'Vitamin A', 'Vitamin B1 (Thiamine)', 'Vitamin B2 (Riboflavin)', 'Vitamin B3 (Niacin)',
+  'Vitamin B5 (Pantothenic Acid)', 'Vitamin B6', 'Vitamin B7 (Biotin)', 'Vitamin B9 (Folic Acid)',
+  'Vitamin B12', 'Vitamin C', 'Vitamin D', 'Vitamin D3', 'Vitamin E', 'Vitamin K',
+  'Multivitamins', 'Prenatal Vitamins', 'Calcium', 'Iron', 'Zinc', 'Magnesium',
+  'Potassium', 'Selenium', 'Chromium', 'Iodine', 'Manganese',
+  // Supplements
+  'Fish Oil (Omega-3)', 'Collagen', 'CoQ10', 'Probiotics', 'Melatonin',
+  'Glucosamine', 'Chondroitin', 'Spirulina', 'Turmeric / Curcumin', 'Ginkgo Biloba',
+  'Garlic Extract', 'Whey Protein', 'Creatine',
+  // Diabetes
+  'Metformin', 'Glibenclamide', 'Glimepiride', 'Gliclazide', 'Sitagliptin',
+  'Empagliflozin', 'Dapagliflozin', 'Pioglitazone', 'Insulin (Rapid-acting)',
+  'Insulin (Long-acting)', 'Insulin (Mixed)',
+  // Hypertension / Heart
+  'Amlodipine', 'Losartan', 'Valsartan', 'Telmisartan', 'Enalapril', 'Lisinopril',
+  'Ramipril', 'Atenolol', 'Metoprolol', 'Carvedilol', 'Bisoprolol', 'Nifedipine',
+  'Diltiazem', 'Verapamil', 'Digoxin', 'Furosemide', 'Hydrochlorothiazide',
+  'Spironolactone', 'Isosorbide Mononitrate', 'Nitroglycerin',
+  // Cholesterol
+  'Atorvastatin', 'Simvastatin', 'Rosuvastatin', 'Lovastatin', 'Fenofibrate', 'Ezetimibe',
+  // Blood thinners
+  'Aspirin', 'Clopidogrel', 'Warfarin', 'Rivaroxaban', 'Apixaban',
+  // GI / Acid
+  'Omeprazole', 'Pantoprazole', 'Lansoprazole', 'Rabeprazole', 'Famotidine',
+  'Ranitidine', 'Antacids', 'Metoclopramide', 'Domperidone', 'Loperamide',
+  'Bisacodyl', 'Lactulose',
+  // Antibiotics
+  'Amoxicillin', 'Co-amoxiclav (Augmentin)', 'Azithromycin', 'Clarithromycin',
+  'Ciprofloxacin', 'Levofloxacin', 'Doxycycline', 'Tetracycline', 'Metronidazole',
+  'Cotrimoxazole', 'Cephalexin', 'Cefuroxime', 'Ceftriaxone', 'Clindamycin',
+  // Antifungal / Antiviral
+  'Fluconazole', 'Clotrimazole', 'Acyclovir', 'Oseltamivir (Tamiflu)',
+  // Pain / Anti-inflammatory
+  'Paracetamol (Acetaminophen)', 'Ibuprofen', 'Mefenamic Acid', 'Naproxen',
+  'Celecoxib', 'Diclofenac', 'Tramadol', 'Ketorolac',
+  // Gout
+  'Allopurinol', 'Colchicine', 'Febuxostat',
+  // Steroids
+  'Prednisone', 'Prednisolone', 'Dexamethasone', 'Methylprednisolone', 'Hydrocortisone',
+  // Respiratory / Asthma / Allergy
+  'Salbutamol (Albuterol)', 'Budesonide', 'Fluticasone', 'Montelukast', 'Salmeterol',
+  'Ipratropium', 'Cetirizine', 'Loratadine', 'Fexofenadine', 'Diphenhydramine', 'Chlorphenamine',
+  // Thyroid
+  'Levothyroxine', 'Carbimazole', 'Propylthiouracil',
+  // Mental health / Neuro
+  'Sertraline', 'Fluoxetine', 'Escitalopram', 'Paroxetine', 'Venlafaxine',
+  'Amitriptyline', 'Clonazepam', 'Alprazolam', 'Diazepam', 'Lorazepam',
+  'Risperidone', 'Quetiapine', 'Haloperidol', 'Lithium', 'Valproic Acid',
+  'Carbamazepine', 'Levetiracetam', 'Phenytoin', 'Gabapentin', 'Pregabalin',
+  // Urology / Other
+  'Tamsulosin', 'Finasteride', 'Sildenafil', 'Tadalafil',
+  'Methotrexate', 'Hydroxychloroquine', 'Azathioprine',
+  'Oral Contraceptives', 'Progesterone', 'Estradiol',
+].sort((a, b) => a.localeCompare(b));
+
+// Combobox component
+function MedCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [query, setQuery] = useState(value);
+  const [open, setOpen] = useState(false);
+  const [highlighted, setHighlighted] = useState(0);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const filtered = query.trim().length === 0
+    ? []
+    : MEDICATIONS_LIST.filter((m) => m.toLowerCase().includes(query.toLowerCase())).slice(0, 10);
+
+  useEffect(() => { setHighlighted(0); }, [query]);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        // Reset to last valid value if user typed but didn't pick
+        if (!MEDICATIONS_LIST.includes(query)) {
+          setQuery(value);
+        }
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [query, value]);
+
+  function select(med: string) {
+    setQuery(med);
+    onChange(med);
+    setOpen(false);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (!open || filtered.length === 0) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setHighlighted((h) => Math.min(h + 1, filtered.length - 1)); }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); setHighlighted((h) => Math.max(h - 1, 0)); }
+    if (e.key === 'Enter')     { e.preventDefault(); select(filtered[highlighted]); }
+    if (e.key === 'Escape')    { setOpen(false); }
+  }
+
+  const isValid = MEDICATIONS_LIST.includes(query);
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <div className="relative">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        <input
+          autoFocus
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); onChange(''); setOpen(true); }}
+          onFocus={() => { if (query.trim()) setOpen(true); }}
+          onKeyDown={handleKeyDown}
+          placeholder="Search medication or vitamin…"
+          className={`w-full pl-8 pr-3 py-2.5 border rounded-xl text-sm outline-none transition-all ${
+            isValid
+              ? 'border-green-400 ring-2 ring-green-100 bg-green-50/30'
+              : 'border-gray-200 focus:ring-2 focus:ring-green-500'
+          }`}
+        />
+        {isValid && (
+          <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />
+        )}
+      </div>
+
+      {open && filtered.length > 0 && (
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-56 overflow-y-auto">
+          {filtered.map((med, i) => (
+            <li
+              key={med}
+              onMouseDown={() => select(med)}
+              onMouseEnter={() => setHighlighted(i)}
+              className={`px-3 py-2.5 text-sm cursor-pointer transition-colors ${
+                i === highlighted ? 'bg-green-50 text-green-800' : 'text-gray-800 hover:bg-gray-50'
+              }`}
+            >
+              {med}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {open && query.trim().length >= 2 && filtered.length === 0 && (
+        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg px-3 py-3 text-sm text-gray-400 text-center">
+          No match found — try a generic name
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Medications() {
   const navigate = useNavigate();
@@ -42,10 +190,13 @@ export default function Medications() {
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) { toast.error('Enter a medication name'); return; }
+    if (!name.trim() || !MEDICATIONS_LIST.includes(name)) {
+      toast.error('Select a medication from the list');
+      return;
+    }
     setSaving(true);
     try {
-      const med = await addMedication({ name: name.trim(), dosage: dosage.trim() || undefined, frequency, notes: notes.trim() || undefined });
+      const med = await addMedication({ name, dosage: dosage.trim() || undefined, frequency, notes: notes.trim() || undefined });
       setMeds((prev) => [...prev, med]);
       setName(''); setDosage(''); setFrequency('once_daily'); setNotes('');
       setShowForm(false);
@@ -72,13 +223,17 @@ export default function Medications() {
   }
 
   async function handleDelete(id: string) {
-    await deleteMedication(id);
-    setMeds((prev) => prev.filter((m) => m.id !== id));
-    toast.success('Removed');
+    try {
+      await deleteMedication(id);
+      setMeds((prev) => prev.filter((m) => m.id !== id));
+      toast.success('Removed');
+    } catch {
+      toast.error('Failed to remove medication');
+    }
   }
 
   const totalNeeded = meds.filter(m => m.doses_needed > 0).reduce((s, m) => s + m.doses_needed, 0);
-  const totalTaken = meds.filter(m => m.doses_needed > 0).reduce((s, m) => s + Math.min(m.taken_today, m.doses_needed), 0);
+  const totalTaken  = meds.filter(m => m.doses_needed > 0).reduce((s, m) => s + Math.min(m.taken_today, m.doses_needed), 0);
 
   return (
     <div className="page-enter min-h-screen bg-gray-50 pb-8">
@@ -107,9 +262,7 @@ export default function Medications() {
               <div>
                 <p className="text-sm font-semibold text-gray-900">Today's doses</p>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {totalTaken === totalNeeded
-                    ? 'All done for today!'
-                    : `${totalNeeded - totalTaken} remaining`}
+                  {totalTaken === totalNeeded ? 'All done for today!' : `${totalNeeded - totalTaken} remaining`}
                 </p>
               </div>
               <div className="text-right">
@@ -135,13 +288,10 @@ export default function Medications() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-              <input
-                autoFocus
-                placeholder="e.g. Metformin, Amlodipine, Vitamin D"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none"
-              />
+              <MedCombobox value={name} onChange={setName} />
+              {name && !MEDICATIONS_LIST.includes(name) && (
+                <p className="text-xs text-amber-600 mt-1">Select an item from the dropdown to continue.</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -188,8 +338,8 @@ export default function Medications() {
               </button>
               <button
                 type="submit"
-                disabled={saving}
-                className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold disabled:opacity-50"
+                disabled={saving || !MEDICATIONS_LIST.includes(name)}
+                className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold disabled:opacity-40 transition-opacity"
               >
                 {saving ? 'Adding…' : 'Add Medication'}
               </button>
@@ -259,9 +409,7 @@ export default function Medications() {
                               <div
                                 key={i}
                                 className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                                  i < med.taken_today
-                                    ? 'bg-green-500 border-green-500'
-                                    : 'border-gray-200'
+                                  i < med.taken_today ? 'bg-green-500 border-green-500' : 'border-gray-200'
                                 }`}
                               >
                                 {i < med.taken_today && <Check size={10} className="text-white" />}
@@ -285,11 +433,7 @@ export default function Medications() {
                         : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-100 active:bg-gray-200 disabled:opacity-50'
                     }`}
                   >
-                    {takingId === med.id
-                      ? 'Logging…'
-                      : done && !isAsNeeded
-                      ? '✓ Done for today'
-                      : 'Mark as taken'}
+                    {takingId === med.id ? 'Logging…' : done && !isAsNeeded ? '✓ Done for today' : 'Mark as taken'}
                   </button>
                 </div>
               );
