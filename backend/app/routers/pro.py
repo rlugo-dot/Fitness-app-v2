@@ -223,43 +223,65 @@ def get_pro_dashboard(
 
     seven_days_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
 
-    client_summaries = []
-    for uid in confirmed_user_ids:
-        # Weekly calories
-        food_res = (
+    # Batch all three queries across every confirmed client — O(3) instead of O(3n)
+    if confirmed_user_ids:
+        food_rows = (
             supabase.table("food_logs")
-            .select("calories, log_date")
-            .eq("user_id", uid)
+            .select("user_id, calories, log_date")
+            .in_("user_id", confirmed_user_ids)
             .gte("log_date", seven_days_ago)
             .execute()
-        )
+        ).data or []
+
+        wo_rows = (
+            supabase.table("workout_logs")
+            .select("user_id, calories_burned")
+            .in_("user_id", confirmed_user_ids)
+            .gte("log_date", seven_days_ago)
+            .execute()
+        ).data or []
+
+        # Fetch enough weight rows per user (2 per client); processed below
+        wt_rows = (
+            supabase.table("weight_logs")
+            .select("user_id, weight_kg, logged_at")
+            .in_("user_id", confirmed_user_ids)
+            .order("logged_at", desc=True)
+            .limit(len(confirmed_user_ids) * 2)
+            .execute()
+        ).data or []
+    else:
+        food_rows, wo_rows, wt_rows = [], [], []
+
+    # Group batched results by user_id
+    food_by_user: dict = {}
+    for row in food_rows:
+        food_by_user.setdefault(row["user_id"], []).append(row)
+
+    wo_by_user: dict = {}
+    for row in wo_rows:
+        wo_by_user.setdefault(row["user_id"], []).append(row)
+
+    wt_by_user: dict = {}
+    for row in wt_rows:
+        # Keep only the two most-recent entries per user (rows are already DESC)
+        bucket = wt_by_user.setdefault(row["user_id"], [])
+        if len(bucket) < 2:
+            bucket.append(row)
+
+    client_summaries = []
+    for uid in confirmed_user_ids:
+        food_entries = food_by_user.get(uid, [])
         by_day: dict = {}
-        for row in (food_res.data or []):
+        for row in food_entries:
             d = row["log_date"]
             by_day[d] = by_day.get(d, 0) + (row["calories"] or 0)
         avg_cal = round(sum(by_day.values()) / len(by_day)) if by_day else None
 
-        # Weekly workouts
-        wo_res = (
-            supabase.table("workout_logs")
-            .select("id, calories_burned")
-            .eq("user_id", uid)
-            .gte("log_date", seven_days_ago)
-            .execute()
-        )
-        workouts = wo_res.data or []
+        workouts = wo_by_user.get(uid, [])
         calories_burned = sum((w.get("calories_burned") or 0) for w in workouts)
 
-        # Latest two weights for trend
-        wt_res = (
-            supabase.table("weight_logs")
-            .select("weight_kg, logged_at")
-            .eq("user_id", uid)
-            .order("logged_at", desc=True)
-            .limit(2)
-            .execute()
-        )
-        weights = wt_res.data or []
+        weights = wt_by_user.get(uid, [])
         latest_weight = weights[0]["weight_kg"] if weights else None
         weight_change = (
             round(weights[0]["weight_kg"] - weights[1]["weight_kg"], 1)
