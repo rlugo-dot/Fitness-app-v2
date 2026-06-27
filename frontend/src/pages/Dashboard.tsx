@@ -4,6 +4,7 @@ import { getMeals, getDailySummary, getWater, updateWater, deleteMealLog, getWor
 import type { VitalLog, Medication } from '../services/api';
 import type { FoodLog, DailySummary, WaterLog, WorkoutSummary, MealType, Profile } from '../types';
 import { Plus, Trash2, Droplets, Utensils, LogOut, Dumbbell, ChevronLeft, ChevronRight, Sparkles, Activity, Pill } from 'lucide-react';
+import OnboardingFlow, { shouldShowOnboarding } from '../components/OnboardingFlow';
 
 const CONDITION_LABELS: Record<string, string> = {
   diabetes: 'Diabetes', hypertension: 'Hypertension', high_cholesterol: 'High Cholesterol',
@@ -216,6 +217,7 @@ export default function Dashboard({ profile, onSignOut }: Props) {
   const navigate = useNavigate();
   const today = new Date().toISOString().split('T')[0];
   const [date, setDate] = useState(today);
+  const [showOnboarding, setShowOnboarding] = useState(() => shouldShowOnboarding());
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [water, setWater] = useState<WaterLog>({ glasses: 0, goal: 8 });
@@ -286,6 +288,15 @@ export default function Dashboard({ profile, onSignOut }: Props) {
   const fiberTarget = 30;
 
   const isToday = date === today;
+
+  if (showOnboarding) {
+    return (
+      <OnboardingFlow
+        name={profile.full_name}
+        onDone={() => setShowOnboarding(false)}
+      />
+    );
+  }
 
   return (
     <div className="page-enter min-h-screen bg-gray-50">
