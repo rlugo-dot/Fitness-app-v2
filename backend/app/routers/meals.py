@@ -51,7 +51,7 @@ def log_food(
         raise HTTPException(status_code=400, detail="Invalid meal_type")
 
     # Custom entry (AI scan, recommendation) — macros provided directly
-    is_custom = any(req.food_id.startswith(p) for p in ("ai_scan_", "rec_", "custom_", "barcode_"))
+    is_custom = any(req.food_id.startswith(p) for p in ("ai_scan_", "rec_", "custom_", "barcode_", "usda_"))
     if is_custom:
         record = {
             "user_id": current_user["id"],
