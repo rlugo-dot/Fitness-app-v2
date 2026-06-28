@@ -5,6 +5,7 @@ import type { VitalLog, Medication } from '../services/api';
 import type { FoodLog, DailySummary, WaterLog, WorkoutSummary, MealType, Profile } from '../types';
 import { Plus, Trash2, Droplets, Utensils, LogOut, Dumbbell, ChevronLeft, ChevronRight, Sparkles, Activity, Pill } from 'lucide-react';
 import OnboardingFlow, { shouldShowOnboarding } from '../components/OnboardingFlow';
+import GettingStarted, { shouldShowChecklist, markFirstMeal, markFirstWorkout, markFirstVitals } from '../components/GettingStarted';
 
 const CONDITION_LABELS: Record<string, string> = {
   diabetes: 'Diabetes', hypertension: 'Hypertension', high_cholesterol: 'High Cholesterol',
@@ -218,6 +219,7 @@ export default function Dashboard({ profile, onSignOut }: Props) {
   const today = new Date().toISOString().split('T')[0];
   const [date, setDate] = useState(today);
   const [showOnboarding, setShowOnboarding] = useState(() => shouldShowOnboarding());
+  const [showChecklist, setShowChecklist] = useState(() => shouldShowChecklist());
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [water, setWater] = useState<WaterLog>({ glasses: 0, goal: 8 });
@@ -259,6 +261,11 @@ export default function Dashboard({ profile, onSignOut }: Props) {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Persist "first time done" flags so checklist stays ticked across days
+  useEffect(() => { if (logs.length > 0) markFirstMeal(); }, [logs]);
+  useEffect(() => { if (workoutSummary && workoutSummary.sessions > 0) markFirstWorkout(); }, [workoutSummary]);
+  useEffect(() => { if (latestVitals) markFirstVitals(); }, [latestVitals]);
 
   async function handleDeleteLog(id: string) {
     try {
@@ -341,6 +348,20 @@ export default function Dashboard({ profile, onSignOut }: Props) {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-5 space-y-4">
+
+        {/* Getting Started checklist — shown until dismissed */}
+        {showChecklist && !loading && (
+          <GettingStarted
+            calorieGoalSet={(profile.daily_calorie_goal ?? 0) > 0}
+            conditionsSet={conditions.length > 0}
+            mealLogged={logs.length > 0}
+            workoutLogged={(workoutSummary?.sessions ?? 0) > 0}
+            vitalsLogged={!!latestVitals}
+            waterTracked={water.glasses > 0}
+            onDismiss={() => setShowChecklist(false)}
+          />
+        )}
+
         {loading ? (
           <div className="space-y-4 animate-pulse">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col items-center gap-4">
